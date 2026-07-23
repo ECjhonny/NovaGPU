@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NovaGPU Assistant - Asistente virtual corporativo inteligente de NovaGPU Technologies">
+    <title>NovaGPU Assistant | Asistente Corporativo IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
+                            <path d="M8 16L14 10V14H18V10L24 16L18 22V18H14V22L8 16Z" fill="white" fill-opacity="0.95"/>
+                            <defs>
+                                <linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32">
+                                    <stop stop-color="#6366f1"/>
+                                    <stop offset="1" stop-color="#8b5cf6"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>NovaGPU</h1>
+                        <span>Assistant</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Filtrar por departamento</span>
+                    <button class="nav-item active" data-department="" id="dept-all">
+                        <span class="nav-icon">🏢</span>
+                        <span>Todos</span>
+                    </button>
+                    <button class="nav-item" data-department="rrhh" id="dept-rrhh">
+                        <span class="nav-icon">👥</span>
+                        <span>Recursos Humanos</span>
+                    </button>
+                    <button class="nav-item" data-department="finanzas" id="dept-finanzas">
+                        <span class="nav-icon">💰</span>
+                        <span>Finanzas</span>
+                    </button>
+                    <button class="nav-item" data-department="operaciones" id="dept-operaciones">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Operaciones</span>
+                    </button>
+                    <button class="nav-item" data-department="legal" id="dept-legal">
+                        <span class="nav-icon">⚖️</span>
+                        <span>Legal</span>
+                    </button>
+                    <button class="nav-item" data-department="marketing" id="dept-marketing">
+                        <span class="nav-icon">📢</span>
+                        <span>Marketing</span>
+                    </button>
+                    <button class="nav-item" data-department="calidad" id="dept-calidad">
+                        <span class="nav-icon">✅</span>
+                        <span>Calidad</span>
+                    </button>
+                    <button class="nav-item" data-department="sistemas" id="dept-sistemas">
+                        <span class="nav-icon">💻</span>
+                        <span>Sistemas</span>
+                    </button>
+                    <button class="nav-item" data-department="estrategia" id="dept-estrategia">
+                        <span class="nav-icon">🎯</span>
+                        <span>Estratégico</span>
+                    </button>
+                    <button class="nav-item" data-department="investigacion" id="dept-investigacion">
+                        <span class="nav-icon">🔬</span>
+                        <span>Investigación y D.</span>
+                    </button>
+                    <button class="nav-item" data-department="comunicacion" id="dept-comunicacion">
+                        <span class="nav-icon">💬</span>
+                        <span>Comunicación Interna</span>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-action btn-reindex" id="btn-reindex" title="Re-indexar documentos">
+                    <span>🔄</span> Indexar documentos
+                </button>
+                <button class="btn-action btn-clear" id="btn-clear" title="Limpiar conversación">
+                    <span>🗑️</span> Limpiar chat
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <button class="btn-menu" id="btn-menu" aria-label="Menú">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="header-info">
+                    <h2 id="current-department-title">NovaGPU Assistant</h2>
+                    <span class="header-status" id="connection-status">
+                        <span class="status-dot"></span>
+                        En línea
+                    </span>
+                </div>
+            </header>
+
+            <!-- Chat Area -->
+            <div class="chat-container" id="chat-container">
+                <!-- Welcome Message -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="40" cy="40" r="38" fill="url(#welcome-grad)" opacity="0.1"/>
+                            <circle cx="40" cy="40" r="28" fill="url(#welcome-grad)" opacity="0.15"/>
+                            <path d="M28 40L36 32V37H44V32L52 40L44 48V43H36V48L28 40Z" fill="url(#welcome-grad)"/>
+                            <defs>
+                                <linearGradient id="welcome-grad" x1="0" y1="0" x2="80" y2="80">
+                                    <stop stop-color="#6366f1"/>
+                                    <stop offset="1" stop-color="#a78bfa"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <h2>¡Hola! Soy NovaGPU Assistant</h2>
+                    <p>Tu asistente corporativo inteligente. Pregúntame sobre políticas, procesos, presupuestos, especificaciones de tarjetas gráficas o cualquier documento interno.</p>
+                    <div class="quick-actions">
+                        <button class="quick-action" data-question="¿Cuáles son las especificaciones y precios de las tarjetas gráficas NovaGPU?">
+                            🎮 Precios y specs GPUs
+                        </button>
+                        <button class="quick-action" data-question="¿Cuáles son las políticas de vacaciones y licencias?">
+                            📋 Políticas de vacaciones
+                        </button>
+                        <button class="quick-action" data-question="¿Cuál es el roadmap de nuevos lanzamientos de GPUs 2026-2028?">
+                            🚀 Roadmap de productos
+                        </button>
+                        <button class="quick-action" data-question="¿Cómo está estructurada la API interna de NovaGPU?">
+                            💻 API de Sistemas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="messages" id="messages"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <form class="input-form" id="chat-form">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Escribe tu pregunta aquí..." 
+                            rows="1"
+                            maxlength="2000"
+                            aria-label="Mensaje"
+                        ></textarea>
+                        <button type="submit" class="btn-send" id="btn-send" aria-label="Enviar mensaje" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="input-hint">
+                        Presiona <kbd>Enter</kbd> para enviar · <kbd>Shift+Enter</kbd> para nueva línea
+                    </span>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

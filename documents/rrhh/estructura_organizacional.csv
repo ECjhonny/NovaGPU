@@ -1,0 +1,11 @@
+id,departamento,cargo,nivel,responsable_directo,ubicacion
+1,Recursos Humanos,Directora Global de RRHH,C-Level,CEO,Oficina Central - Bogotá
+2,Recursos Humanos,Lead Talent Acquisition,Líder,Directora Global de RRHH,Oficina Central - CDMX
+3,Recursos Humanos,HR Business Partner,Senior,Directora Global de RRHH,Remoto - Medellín
+4,Finanzas,VP de Finanzas y Tesorería,C-Level,CEO,Oficina Central - Bogotá
+5,Finanzas,Gerente de Contabilidad,Gerente,VP de Finanzas,Oficina Central - CDMX
+6,Operaciones,Director de Cadena de Suministro,C-Level,CEO,Planta Ensambladora - Guadalajara
+7,Operaciones,Gerente de Planta de GPUs,Gerente,Director de Cadena de Suministro,Planta Ensambladora - Guadalajara
+8,Sistemas,VP de Infraestructura e IT,C-Level,CEO,Oficina Central - Bogotá
+9,Investigación y Desarrollo,Lead Architect GPUs,Principal,CEO,Centro I+D - Monterrey
+10,Marketing,Directora de Marketing y PR,C-Level,CEO,Oficina Central - Bogotá

@@ -1,0 +1,9 @@
+departamento,presupuesto_asignado_USD,gastado_acumulado_USD,disponible_USD,porcentaje_ejecucion
+Investigación y Desarrollo (I+D),25000000,11300000,13700000,45.2%
+Operaciones y Cadena de Suministro,42000000,19700000,22300000,46.9%
+Marketing y Ventas,15000000,7000000,8000000,46.6%
+Sistemas e Infraestructura Cloud,8500000,4000000,4500000,47.0%
+Recursos Humanos,4500000,2100000,2400000,46.6%
+Legal y Compliance,2800000,1200000,1600000,42.8%
+Calidad y Garantía,3200000,1500000,1700000,46.8%
+TOTAL CORPORATIVO,101000000,46800000,54200000,46.3%

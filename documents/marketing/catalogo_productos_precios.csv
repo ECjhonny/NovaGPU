@@ -1,0 +1,7 @@
+modelo_gpu,segmento,vram_gb,tipo_vram,tdp_watts,precio_msrp_usd,garantia_anios
+Nova Titan X 64GB,Data Center & AI,64GB,HBM3e,450W,$4999 USD,5 años
+Nova Titan X 32GB,Workstation & LLM,32GB,GDDR6X,350W,$2499 USD,5 años
+Nova Phoenix 8000 XTX,Gaming Enthusiast (4K),24GB,GDDR6X,320W,$1199 USD,3 años
+Nova Phoenix 8000,Gaming Enthusiast (1440p/4K),16GB,GDDR6X,260W,$799 USD,3 años
+Nova Spark 5000 XT,Gaming Mainstream (1440p),12GB,GDDR6,200W,$449 USD,2 años
+Nova Spark 5000,Gaming Entry (1080p),8GB,GDDR6,150W,$299 USD,2 años
