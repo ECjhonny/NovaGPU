@@ -1,4 +1,4 @@
-# 🚀 NovaGPU Assistant - Agente Corporativo de IA (FastAPI + Groq + RAG)
+# 🚀 NovaGPU Assistant - Agente Corporativo de IA Multi-Proveedor (FastAPI + RAG)
 
 **Asistente Virtual Corporativo Inteligente para NovaGPU Technologies**  
 *Desarrollado para el Desafío de Inteligencia Artificial de Alura LatAm.*
@@ -16,10 +16,16 @@ El asistente funciona como una **base de conocimiento conversacional centralizad
 ## ⚡ Tecnologías Principales
 
 - **Backend Web**: FastAPI (Python 3.10+) & Uvicorn Server
-- **Inferencia LLM**: **Groq** (`llama-3.3-70b-versatile`) o **Cohere** (`command-r-plus`)
-- **Embeddings**: **Google Gemini** (`gemini-embedding-2`) o **Cohere** (`embed-multilingual-v3.0`)
-- **Vector Database**: ChromaDB (Base de datos vectorial persistente)
-- **Orquestación RAG**: LangChain 0.3 (`langchain-groq`, `langchain-cohere`, `langchain-google-genai`)
+- **Inferencia LLM (Multi-proveedor con Fallback)**:
+  - 🥇 **Cohere**: `command-r-plus` (Proveedor principal)
+  - 🥈 **Google Gemini**: `gemini-2.0-flash`
+  - 🥉 **Groq**: `llama-3.3-70b-versatile`
+- **Embeddings Vectoriales (Multi-proveedor con Fallback)**:
+  - 🧠 **Voyage AI**: `voyage-3-lite`
+  - 🧠 **Cohere**: `embed-multilingual-v3.0`
+  - 🧠 **Google Gemini**: `gemini-embedding-2`
+- **Vector Database**: ChromaDB (Base de datos vectorial persistente con autorecreación ante cambios de dimensión)
+- **Orquestación RAG**: LangChain 0.3 (`langchain-cohere`, `langchain-google-genai`, `langchain-groq`, `langchain-voyageai`)
 - **Frontend**: HTML5, Vanilla CSS3 (Dark Theme corporativo) & JavaScript ES6+
 
 ---
@@ -79,16 +85,45 @@ Copia el archivo `.env.example` a `.env`:
 ```bash
 cp .env.example .env
 ```
-Edita `.env` e ingresa tus claves de API y preferencia de proveedor:
-```env
-LLM_PROVIDER=cohere
-EMBEDDINGS_PROVIDER=cohere
 
+Edita `.env` e ingresa tus claves de API y preferencia de proveedores:
+```env
+# --- Selección de Proveedores ---
+LLM_PROVIDER=cohere          # Opciones: cohere, gemini, groq
+EMBEDDINGS_PROVIDER=voyage   # Opciones: voyage, cohere, gemini
+
+# --- API Keys & Modelos LLM / Embeddings ---
 COHERE_API_KEY=tu_clave_cohere_aqui
+COHERE_MODEL=command-r-plus
+COHERE_EMBEDDING_MODEL=embed-multilingual-v3.0
+
 GEMINI_API_KEY=tu_clave_gemini_aqui
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_EMBEDDING_MODEL=gemini-embedding-2
+
 GROQ_API_KEY=gsk_tu_clave_groq_aqui
-VOYAGE_API_KEY=tu_clave_de_voyage_ai_aqui
+GROQ_MODEL=llama-3.3-70b-versatile
+
+VOYAGE_API_KEY=pa-tu_clave_voyage_aqui
+VOYAGE_EMBEDDING_MODEL=voyage-3-lite
 ```
+
+---
+
+## 🤖 Modelos de LLM y Embeddings Soportados
+
+| Proveedor | Tipo | Modelo por Defecto | Variable `.env` |
+| :--- | :--- | :--- | :--- |
+| **Cohere** | LLM | `command-r-plus` | `COHERE_API_KEY` |
+| **Cohere** | Embeddings | `embed-multilingual-v3.0` | `COHERE_API_KEY` |
+| **Google Gemini** | LLM | `gemini-2.0-flash` | `GEMINI_API_KEY` |
+| **Google Gemini** | Embeddings | `gemini-embedding-2` | `GEMINI_API_KEY` |
+| **Groq** | LLM | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| **Voyage AI** | Embeddings | `voyage-3-lite` | `VOYAGE_API_KEY` |
+
+> 🛡️ **Sistema de Fallback Automático**: Si el proveedor seleccionado en `LLM_PROVIDER` o `EMBEDDINGS_PROVIDER` no cuenta con API Key configurada o falla, el sistema conmuta automáticamente al siguiente proveedor disponible sin interrumpir el servicio.
+
+---
 
 ### 5. Ejecutar la aplicación FastAPI con Uvicorn
 ```bash
