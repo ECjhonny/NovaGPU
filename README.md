@@ -56,7 +56,7 @@ El agente comprende y procesa automáticamente 8+ formatos de archivo en 10 áre
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/NovaGPU-Assistant.git
+git clone git@github.com:ECjhonny/NovaGPU.git
 cd NovaGPU-Assistant
 ```
 
@@ -87,6 +87,7 @@ EMBEDDINGS_PROVIDER=cohere
 COHERE_API_KEY=tu_clave_cohere_aqui
 GEMINI_API_KEY=tu_clave_gemini_aqui
 GROQ_API_KEY=gsk_tu_clave_groq_aqui
+VOYAGE_API_KEY=tu_clave_de_voyage_ai_aqui
 ```
 
 ### 5. Ejecutar la aplicación FastAPI con Uvicorn
