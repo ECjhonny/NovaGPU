@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import STATIC_DIR
 from app.rag.loader import load_and_split
-from app.rag.vectorstore import index_documents, get_document_count
+from app.rag.vectorstore import get_document_count, index_documents
 from app.routes.chat_routes import router
 from app.utils import get_logger
 
@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
                 logger.info("✅ Base de conocimiento RAG lista.")
             else:
                 logger.warning("⚠️ No se encontraron documentos en la carpeta 'documents/'.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"⚠️ Error cargando documentos al iniciar: {e}")
         logger.info("La aplicación se iniciará de todos modos. Revisa la configuración de API keys o la conexión con el servicio de embeddings.")
 

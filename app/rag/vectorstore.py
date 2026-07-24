@@ -1,10 +1,9 @@
 """Módulo de vectorstore para el flujo RAG."""
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from langchain_chroma import Chroma
-
 from langchain_core.documents import Document
 
 from app.core.config import CHROMA_DB_DIR, COLLECTION_NAME, TOP_K_RESULTS
@@ -13,7 +12,7 @@ from app.utils import get_logger
 
 logger = get_logger(__name__)
 
-_vectorstore: Optional[Chroma] = None
+_vectorstore: Chroma | None = None
 
 
 def get_vectorstore() -> Chroma:
@@ -40,12 +39,12 @@ def get_document_count() -> int:
     try:
         vectorstore = get_vectorstore()
         return vectorstore._collection.count()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(f"⚠️ Error al verificar el conteo de documentos: {e}")
         return 0
 
 
-def index_documents(documents: List[Document], batch_size: int = 15, force: bool = False) -> None:
+def index_documents(documents: list[Document], batch_size: int = 15, force: bool = False) -> None:
     """
     Indexa una lista de documentos en el vector store en lotes con reintentos para evitar Rate Limit (429).
     Si force=False y ya existen documentos en la BD, omite la re-indexación para ahorrar tokens.
@@ -90,9 +89,9 @@ def index_documents(documents: List[Document], batch_size: int = 15, force: bool
                             )
                             time.sleep(wait_time)
                         else:
-                            raise batch_err
+                            raise
                     else:
-                        raise batch_err
+                        raise
             time.sleep(2)
 
         logger.info(f"✅ {total} documentos indexados exitosamente.")
@@ -104,12 +103,12 @@ def index_documents(documents: List[Document], batch_size: int = 15, force: bool
 
 
 def search_documents(
-    query: str, k: int = TOP_K_RESULTS, department: Optional[str] = None
-) -> List[Document]:
+    query: str, k: int = TOP_K_RESULTS, department: str | None = None
+) -> list[Document]:
     """Busca documentos relevantes en el vector store."""
     vectorstore = get_vectorstore()
 
-    search_kwargs: Dict[str, Any] = {"k": k}
+    search_kwargs: dict[str, Any] = {"k": k}
     if department:
         search_kwargs["filter"] = {"department": department}
 
@@ -119,11 +118,11 @@ def search_documents(
     return results
 
 
-def get_retriever(k: int = TOP_K_RESULTS, department: Optional[str] = None):
+def get_retriever(k: int = TOP_K_RESULTS, department: str | None = None):
     """Obtiene un retriever configurado del vector store."""
     vectorstore = get_vectorstore()
 
-    search_kwargs: Dict[str, Any] = {"k": k}
+    search_kwargs: dict[str, Any] = {"k": k}
     if department:
         search_kwargs["filter"] = {"department": department}
 

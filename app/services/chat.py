@@ -3,14 +3,9 @@ Módulo de chat.
 Implementa la cadena conversacional RAG con Groq LLM y memoria de historial.
 """
 
-from datetime import datetime
-from typing import Dict, Any, Optional
+from datetime import datetime, timezone
+from typing import Any
 from pydantic import SecretStr
-
-try:
-    from langchain_groq import ChatGroq
-except ImportError:
-    ChatGroq = None
 
 try:
     from langchain_cohere import ChatCohere
@@ -22,27 +17,32 @@ try:
 except ImportError:
     ChatGoogleGenerativeAI = None
 
+try:
+    from langchain_groq import ChatGroq
+except ImportError:
+    ChatGroq = None
+
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferWindowMemory
 
 from app.core.config import (
-    LLM_PROVIDER,
-    GROQ_API_KEY,
-    GROQ_MODEL,
     COHERE_API_KEY,
     COHERE_MODEL,
     GEMINI_API_KEY,
     GEMINI_MODEL,
+    GROQ_API_KEY,
+    GROQ_MODEL,
+    LLM_PROVIDER,
     TEMPERATURE,
     TOP_K_RESULTS,
 )
-from app.rag.vectorstore import get_retriever, search_documents
 from app.rag.prompts import CHAT_PROMPT, CONDENSE_QUESTION_PROMPT
-from app.utils import get_logger, format_documents_for_context, format_chat_response
+from app.rag.vectorstore import get_retriever, search_documents
+from app.utils import format_chat_response, format_documents_for_context, get_logger
 
 logger = get_logger(__name__)
 
-_chat_sessions: Dict[str, ConversationBufferWindowMemory] = {}
+_chat_sessions: dict[str, ConversationBufferWindowMemory] = {}
 
 
 def _get_llm():
@@ -168,8 +168,8 @@ def get_chat_chain(session_id: str = "default") -> ConversationalRetrievalChain:
 def chat(
     question: str,
     session_id: str = "default",
-    department: Optional[str] = None,
-) -> Dict[str, Any]:
+    department: str | None = None,
+) -> dict[str, Any]:
     """
     Procesa una pregunta del usuario y retorna la respuesta.
     """
@@ -206,7 +206,7 @@ def chat(
 
         return formatted
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         err_msg = str(e)
         logger.error(f"❌ Error en chat: {err_msg}")
         
@@ -228,7 +228,7 @@ def chat(
         return {
             "response": user_error,
             "sources": [],
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": err_msg,
         }
 

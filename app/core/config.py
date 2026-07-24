@@ -5,6 +5,7 @@ Carga variables de entorno y define constantes del proyecto.
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env
@@ -36,7 +37,7 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-lite")
 
 # --- Configuración del servidor FastAPI ---
 HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", 8000))
+PORT = int(os.getenv("PORT", "8000"))
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
 # --- Configuración de Gemini (LLM & Embeddings) ---
@@ -45,10 +46,10 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
 
 # --- Configuración de RAG ---
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
-TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", 3))
-TEMPERATURE = float(os.getenv("TEMPERATURE", 0.2))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", "3"))
+TEMPERATURE = float(os.getenv("TEMPERATURE", "0.2"))
 
 # --- Departamentos disponibles ---
 DEPARTMENTS = [
