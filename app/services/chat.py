@@ -122,7 +122,9 @@ def _get_llm():
             api_key=SecretStr(GROQ_API_KEY),
         )
     else:
-        logger.error("❌ Ninguna API Key válida configurada para Cohere, Gemini o Groq. Verifica tu archivo .env")
+        logger.error(
+            "❌ Ninguna API Key válida configurada para Cohere, Gemini o Groq. Verifica tu archivo .env"
+        )
         raise ValueError(
             "No se encontró ninguna API Key válida configurada. "
             "Agrega COHERE_API_KEY, GEMINI_API_KEY o GROQ_API_KEY a tu archivo .env para el LLM."
@@ -183,7 +185,9 @@ def chat(
             llm = _get_llm()
             memory = _get_memory(session_id)
 
-            chat_history = memory.chat_memory.messages if hasattr(memory, "chat_memory") else []
+            chat_history = (
+                memory.chat_memory.messages if hasattr(memory, "chat_memory") else []
+            )
 
             messages = CHAT_PROMPT.format_messages(
                 context=context,
@@ -192,7 +196,9 @@ def chat(
             )
             response = llm.invoke(messages)
             raw_content = response.content
-            answer: str = raw_content if isinstance(raw_content, str) else str(raw_content)
+            answer: str = (
+                raw_content if isinstance(raw_content, str) else str(raw_content)
+            )
             memory.save_context({"question": question}, {"answer": answer})
             source_docs = docs
         else:
@@ -210,8 +216,13 @@ def chat(
     except Exception as e:  # noqa: BLE001
         err_msg = str(e)
         logger.error(f"❌ Error en chat: {err_msg}")
-        
-        if "401" in err_msg or "Incorrect API key" in err_msg or "Unauthorized" in err_msg or "invalid_api_key" in err_msg.lower():
+
+        if (
+            "401" in err_msg
+            or "Incorrect API key" in err_msg
+            or "Unauthorized" in err_msg
+            or "invalid_api_key" in err_msg.lower()
+        ):
             user_error = (
                 "❌ **Error de Autenticación (API Key Incorrecta o Expirada)**\n\n"
                 "La clave de API utilizada no es válida o ha caducado.\n"
