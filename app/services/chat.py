@@ -5,6 +5,7 @@ Implementa la cadena conversacional RAG con Groq LLM y memoria de historial.
 
 from datetime import datetime, timezone
 from typing import Any
+
 from pydantic import SecretStr
 
 try:
