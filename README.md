@@ -1,7 +1,7 @@
 # 🚀 NovaGPU Assistant - Agente Corporativo de IA Multi-Proveedor (FastAPI + RAG)
 
 **Asistente Virtual Corporativo Inteligente para NovaGPU Technologies**  
-*Desarrollado para el Desafío de Inteligencia Artificial de Alura LatAm.*
+*Desarrollado para el Challenge de Inteligencia Artificial de Alura Latam.*
 
 ---
 
@@ -108,6 +108,19 @@ VOYAGE_API_KEY=pa-tu_clave_voyage_aqui
 VOYAGE_EMBEDDING_MODEL=voyage-3-lite
 ```
 
+### 5. Ejecutar la aplicación FastAPI con Uvicorn
+```bash
+# Opción 1: Mediante el ejecutable
+python run.py
+
+# Opción 2: Usando Uvicorn directamente
+uvicorn app.main:app --reload --port 8000
+```
+
+Accede desde tu navegador:
+- **Interfaz del Chat**: [http://localhost:8000](http://localhost:8000)
+- **Documentación Interactiva Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
 ---
 
 ## 🤖 Modelos de LLM y Embeddings Soportados
@@ -125,21 +138,6 @@ VOYAGE_EMBEDDING_MODEL=voyage-3-lite
 
 ---
 
-### 5. Ejecutar la aplicación FastAPI con Uvicorn
-```bash
-# Opción 1: Mediante el ejecutable
-python run.py
-
-# Opción 2: Usando Uvicorn directamente
-uvicorn app.main:app --reload --port 8000
-```
-
-Accede desde tu navegador:
-- **Interfaz del Chat**: [http://localhost:8000](http://localhost:8000)
-- **Documentación Interactiva Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
-
 ## ☁️ Despliegue en Oracle Cloud Infrastructure (OCI)
 
 El proyecto está listo para su hospedaje y despliegue en la nube de **Oracle Cloud Infrastructure (OCI)**.
@@ -152,5 +150,5 @@ El proyecto está listo para su hospedaje y despliegue en la nube de **Oracle Cl
 
 ## 📝 Licencia
 
-Proyecto desarrollado para el desafío de Inteligencia Artificial de **Alura LatAm**.
+Proyecto desarrollado para el desafío de Inteligencia Artificial de **Alura Latam**.
 © 2026 NovaGPU Technologies. Todos los derechos reservados.
