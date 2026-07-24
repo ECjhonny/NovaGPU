@@ -53,7 +53,7 @@ async def handle_reindex():
         chunks = load_and_split()
         if not chunks:
             return JSONResponse(content={"message": "No se encontraron documentos para indexar.", "count": 0})
-        index_documents(chunks)
+        index_documents(chunks, force=True)
         return {"message": f"✅ {len(chunks)} fragmentos indexados exitosamente.", "count": len(chunks)}
     except Exception as e:
         logger.error(f"❌ Error en re-indexación: {e}")

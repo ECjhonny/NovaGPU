@@ -35,10 +35,31 @@ def get_vectorstore() -> Chroma:
     return _vectorstore
 
 
-def index_documents(documents: List[Document], batch_size: int = 15) -> None:
-    """Indexa una lista de documentos en el vector store en lotes con reintentos para evitar Rate Limit (429)."""
+def get_document_count() -> int:
+    """Retorna el número de documentos indexados actualmente en ChromaDB."""
+    try:
+        vectorstore = get_vectorstore()
+        return vectorstore._collection.count()
+    except Exception as e:
+        logger.warning(f"⚠️ Error al verificar el conteo de documentos: {e}")
+        return 0
+
+
+def index_documents(documents: List[Document], batch_size: int = 15, force: bool = False) -> None:
+    """
+    Indexa una lista de documentos en el vector store en lotes con reintentos para evitar Rate Limit (429).
+    Si force=False y ya existen documentos en la BD, omite la re-indexación para ahorrar tokens.
+    """
     if not documents:
         logger.warning("⚠️ No hay documentos para indexar.")
+        return
+
+    existing_count = get_document_count()
+    if not force and existing_count > 0:
+        logger.info(
+            f"ℹ️ El vector store ya contiene {existing_count} fragmentos indexados. "
+            "Omitiendo re-indexación al inicio para economizar tokens de API."
+        )
         return
 
     try:

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import STATIC_DIR
 from app.rag.loader import load_and_split
-from app.rag.vectorstore import index_documents
+from app.rag.vectorstore import index_documents, get_document_count
 from app.routes.chat_routes import router
 from app.utils import get_logger
 
@@ -17,17 +17,24 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Carga e indexa automáticamente la documentación al iniciar el servidor."""
+    """Carga e indexa automáticamente la documentación solo si la base vectorial está vacía."""
     logger.info("🚀 Iniciando NovaGPU Assistant (FastAPI)...")
 
     try:
-        chunks = load_and_split()
-        if chunks:
-            logger.info(f"📚 Indexando automáticamente {len(chunks)} fragmentos de documentos...")
-            index_documents(chunks)
-            logger.info("✅ Base de conocimiento RAG lista.")
+        existing_count = get_document_count()
+        if existing_count > 0:
+            logger.info(
+                f"✅ Base de conocimiento RAG lista ({existing_count} fragmentos cargados previamente). "
+                "Omitiendo auto-indexación al inicio para ahorrar tokens de API."
+            )
         else:
-            logger.warning("⚠️ No se encontraron documentos en la carpeta 'documents/'.")
+            chunks = load_and_split()
+            if chunks:
+                logger.info(f"📚 Indexando por primera vez {len(chunks)} fragmentos de documentos...")
+                index_documents(chunks, force=True)
+                logger.info("✅ Base de conocimiento RAG lista.")
+            else:
+                logger.warning("⚠️ No se encontraron documentos en la carpeta 'documents/'.")
     except Exception as e:
         logger.error(f"⚠️ Error cargando documentos al iniciar: {e}")
         logger.info("La aplicación se iniciará de todos modos. Revisa la configuración de API keys o la conexión con el servicio de embeddings.")

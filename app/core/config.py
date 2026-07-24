@@ -47,7 +47,7 @@ GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2
 # --- Configuración de RAG ---
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
-TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", 5))
+TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", 3))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.2))
 
 # --- Departamentos disponibles ---

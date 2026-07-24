@@ -131,11 +131,11 @@ def _get_llm():
 def _get_memory(session_id: str) -> ConversationBufferWindowMemory:
     """
     Obtiene o crea la memoria de conversación para una sesión.
-    Mantiene las últimas 10 interacciones.
+    Mantiene las últimas 4 interacciones para optimizar la ventana de tokens.
     """
     if session_id not in _chat_sessions:
         _chat_sessions[session_id] = ConversationBufferWindowMemory(
-            k=10,
+            k=4,
             memory_key="chat_history",
             return_messages=True,
             output_key="answer",
