@@ -3,6 +3,8 @@
 **Asistente Virtual Corporativo Inteligente para NovaGPU Technologies**  
 *Desarrollado para el Challenge de Inteligencia Artificial de Alura Latam.*
 
+🌐 **App en vivo (24/7)**: [http://149.130.172.8:8000/](http://149.130.172.8:8000/) | 📑 **Swagger API**: [http://149.130.172.8:8000/docs](http://149.130.172.8:8000/docs)
+
 ---
 
 ## 📋 Descripción General
@@ -10,6 +12,16 @@
 **NovaGPU Assistant** es un agente de Inteligencia Artificial abierto a todos los colaboradores de **NovaGPU Technologies**, una empresa ficticia dedicada al diseño y fabricación de tarjetas gráficas (GPUs) de alto rendimiento para gaming, estaciones de trabajo y supercómputo de Inteligencia Artificial.
 
 El asistente funciona como una **base de conocimiento conversacional centralizada**, respondiendo preguntas en tiempo real mediante técnicas de **RAG (Retrieval-Augmented Generation)** procesando la documentación oficial de la organización.
+
+---
+
+## 📸 Demostración e Interfaz
+
+### 🖼️ Captura de la Interfaz Web
+![Interfaz Principal de NovaGPU Assistant](assets/frontend-preview.png)
+
+### 🎥 Demostración de Funcionamiento
+![Demostración en vivo](assets/demo.mp4)
 
 ---
 
@@ -242,8 +254,8 @@ sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
 ```
 
 ### 7. Verificar
-- **Chat**: `http://<IP_PUBLICA_OCI>`
-- **Swagger**: `http://<IP_PUBLICA_OCI>/docs`
+- **Chat en vivo (24/7)**: [http://149.130.172.8:8000/](http://149.130.172.8:8000/)
+- **Documentación Swagger**: [http://149.130.172.8:8000/docs](http://149.130.172.8:8000/docs)
 - **Logs en tiempo real**: `sudo journalctl -u novagpu -f`
 
 ---
