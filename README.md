@@ -16,10 +16,10 @@ El asistente funciona como una **base de conocimiento conversacional centralizad
 ## ⚡ Tecnologías Principales
 
 - **Backend Web**: FastAPI (Python 3.10+) & Uvicorn Server
-- **Inferencia LLM (Multi-proveedor con Fallback)**:
-  - 🥇 **Cohere**: `command-r-plus` (Proveedor principal)
-  - 🥈 **Google Gemini**: `gemini-2.0-flash`
-  - 🥉 **Groq**: `llama-3.3-70b-versatile`
+- **Inferencia LLM (Multi-proveedor con Fallback automático por Rate Limit)**:
+  - 🥇 **Groq**: `llama-3.3-70b-versatile`
+  - 🥈 **Cohere**: `command-a-plus-05-2026`
+  - 🥉 **Google Gemini**: `gemini-3.5-flash-lite`
 - **Embeddings Vectoriales (Multi-proveedor con Fallback)**:
   - 🧠 **Voyage AI**: `voyage-3-lite`
   - 🧠 **Cohere**: `embed-multilingual-v3.0`
@@ -87,23 +87,31 @@ cp .env.example .env
 ```
 
 Edita `.env` e ingresa tus claves de API y preferencia de proveedores:
+
+> ⚠️ **Importante:** No uses comentarios en la misma línea que un valor (e.g. `LLM_PROVIDER=groq # comentario`). Esto causa errores cuando se ejecuta con `systemd` en servidores Linux.
+
 ```env
 # --- Selección de Proveedores ---
-LLM_PROVIDER=cohere          # Opciones: cohere, gemini, groq
-EMBEDDINGS_PROVIDER=voyage   # Opciones: voyage, cohere, gemini
+# Opciones LLM: groq, cohere, gemini
+# Opciones Embeddings: voyage, cohere, gemini
+LLM_PROVIDER=groq
+EMBEDDINGS_PROVIDER=voyage
 
-# --- API Keys & Modelos LLM / Embeddings ---
+# --- Cohere (LLM & Embeddings) ---
 COHERE_API_KEY=tu_clave_cohere_aqui
-COHERE_MODEL=command-r-plus
+COHERE_MODEL=command-a-plus-05-2026
 COHERE_EMBEDDING_MODEL=embed-multilingual-v3.0
 
+# --- Gemini (LLM & Embeddings - Fallback) ---
 GEMINI_API_KEY=tu_clave_gemini_aqui
-GEMINI_MODEL=gemini-2.0-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_EMBEDDING_MODEL=gemini-embedding-2
 
+# --- Groq (LLM) ---
 GROQ_API_KEY=gsk_tu_clave_groq_aqui
 GROQ_MODEL=llama-3.3-70b-versatile
 
+# --- Voyage AI (Embeddings) ---
 VOYAGE_API_KEY=pa-tu_clave_voyage_aqui
 VOYAGE_EMBEDDING_MODEL=voyage-3-lite
 ```
@@ -127,24 +135,100 @@ Accede desde tu navegador:
 
 | Proveedor | Tipo | Modelo por Defecto | Variable `.env` |
 | :--- | :--- | :--- | :--- |
-| **Cohere** | LLM | `command-r-plus` | `COHERE_API_KEY` |
-| **Cohere** | Embeddings | `embed-multilingual-v3.0` | `COHERE_API_KEY` |
-| **Google Gemini** | LLM | `gemini-2.0-flash` | `GEMINI_API_KEY` |
-| **Google Gemini** | Embeddings | `gemini-embedding-2` | `GEMINI_API_KEY` |
 | **Groq** | LLM | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| **Cohere** | LLM | `command-a-plus-05-2026` | `COHERE_API_KEY` |
+| **Cohere** | Embeddings | `embed-multilingual-v3.0` | `COHERE_API_KEY` |
+| **Google Gemini** | LLM | `gemini-3.5-flash-lite` | `GEMINI_API_KEY` |
+| **Google Gemini** | Embeddings | `gemini-embedding-2` | `GEMINI_API_KEY` |
 | **Voyage AI** | Embeddings | `voyage-3-lite` | `VOYAGE_API_KEY` |
 
-> 🛡️ **Sistema de Fallback Automático**: Si el proveedor seleccionado en `LLM_PROVIDER` o `EMBEDDINGS_PROVIDER` no cuenta con API Key configurada o falla, el sistema conmuta automáticamente al siguiente proveedor disponible sin interrumpir el servicio.
+> 🛡️ **Sistema de Fallback Automático con Detección de Rate Limit**: Si un proveedor LLM alcanza su límite de consultas (HTTP 429 / Rate Limit), el sistema conmuta **automáticamente** al siguiente proveedor disponible sin interrumpir el servicio. Para embeddings, se implementan reintentos automáticos con backoff exponencial.
 
 ---
 
 ## ☁️ Despliegue en Oracle Cloud Infrastructure (OCI)
 
-El proyecto está listo para su hospedaje y despliegue en la nube de **Oracle Cloud Infrastructure (OCI)**.
+El proyecto está desplegado y probado en la nube de **Oracle Cloud Infrastructure (OCI)**.
 
-1. **Creación de Compute Instance:** Crear una máquina virtual en OCI (Ubuntu 22.04 LTS u Oracle Linux).
-2. **Security List:** Habilitar el puerto `8000` (o `80` mediante proxy Nginx) en la VCN de OCI.
-3. **Clonar e Iniciar:** Seguir los pasos de instalación local en el servidor OCI y ejecutar mediante `systemd` para servicio continuo 24/7.
+### 1. Crear Compute Instance
+Crear una máquina virtual en OCI con **Oracle Linux 8/9** o **Ubuntu 22.04 LTS**.
+
+### 2. Configurar Security List (Red)
+En la consola de OCI → **Networking** → **VCN** → **Security List**, agregar regla de ingreso:
+- **Source CIDR**: `0.0.0.0/0` | **Protocol**: TCP | **Port**: `80, 8000`
+
+### 3. Abrir puertos en el firewall del OS
+```bash
+# Oracle Linux (firewalld)
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-port=8000/tcp
+sudo firewall-cmd --reload
+
+# Ubuntu (iptables)
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 8000 -j ACCEPT
+sudo netfilter-persistent save
+```
+
+### 4. Instalar dependencias y clonar
+```bash
+sudo dnf install -y python3 python3-pip git nginx   # Oracle Linux
+git clone https://github.com/ECjhonny/NovaGPU.git NovaGPU
+cd NovaGPU
+python3 -m venv venv && source venv/bin/activate
+pip install --upgrade pip && pip install -r requirements.txt
+cp .env.example .env && nano .env   # Configurar API Keys
+```
+
+### 5. Configurar servicio systemd (ejecución 24/7)
+```bash
+sudo nano /etc/systemd/system/novagpu.service
+```
+```ini
+[Unit]
+Description=Servicio NovaGPU Assistant (FastAPI)
+After=network.target
+
+[Service]
+User=opc
+WorkingDirectory=/home/opc/NovaGPU
+ExecStart=/home/opc/NovaGPU/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/novagpu.env
+
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo cp /home/opc/NovaGPU/.env /etc/novagpu.env
+sudo systemctl daemon-reload
+sudo systemctl enable novagpu
+sudo systemctl start novagpu
+```
+
+### 6. Configurar Nginx como Reverse Proxy (opcional)
+```nginx
+server {
+    listen 80;
+    server_name _;
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+```bash
+sudo ln -s /etc/nginx/sites-available/novagpu /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+```
+
+### 7. Verificar
+- **Chat**: `http://<IP_PUBLICA_OCI>`
+- **Swagger**: `http://<IP_PUBLICA_OCI>/docs`
+- **Logs**: `sudo journalctl -u novagpu -f`
 
 ---
 
