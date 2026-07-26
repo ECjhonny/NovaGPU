@@ -7,6 +7,23 @@
 
 ---
 
+## 📌 Tabla de Contenidos
+
+1. [📋 Descripción General](#-descripción-general)
+2. [📸 Demostración e Interfaz](#-demostración-e-interfaz)
+3. [✨ Características Principales](#-características-principales)
+4. [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
+5. [🔄 Flujo de Funcionamiento (RAG Engine)](#-flujo-de-funcionamiento-rag-engine)
+6. [⚡ Tecnologías Principales](#-tecnologías-principales)
+7. [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+8. [📄 Cobertura de Formatos y Categorías de Documentos](#-cobertura-de-formatos-y-categorías-de-documentos)
+9. [🛠️ Instalación y Ejecución Local](#️-instalación-y-ejecución-local)
+10. [🤖 Modelos de LLM y Embeddings Soportados](#-modelos-de-llm-y-embeddings-soportados)
+11. [☁️ Despliegue en Oracle Cloud Infrastructure (OCI)](#️-despliegue-en-oracle-cloud-infrastructure-oci)
+12. [📝 Licencia](#-licencia)
+
+---
+
 ## 📋 Descripción General
 
 **NovaGPU Assistant** es un agente de Inteligencia Artificial abierto a todos los colaboradores de **NovaGPU Technologies**, una empresa ficticia dedicada al diseño y fabricación de tarjetas gráficas (GPUs) de alto rendimiento para gaming, estaciones de trabajo y supercómputo de Inteligencia Artificial.
@@ -26,6 +43,76 @@ https://github.com/user-attachments/assets/9ce6e3f7-66f8-41b8-8deb-c2733f19c6c7
 
 ---
 
+## ✨ Características Principales
+
+- 🧠 **Arquitectura RAG Multiformato de Alto Rendimiento**: Procesa e indexa automáticamente 8+ formatos de documentos corporativos (PDF, Word, Excel, PowerPoint, Markdown, CSV, JSON, HTML).
+- 🛡️ **Sistema de Fallback Ininterrumpido (Resiliencia 24/7)**: Conmutación automática en milisegundos entre 3 proveedores de LLM principales (**Groq**, **Cohere** y **Google Gemini**) para garantizar disponibilidad continua ante límites de cuota (HTTP 429 Rate Limits).
+- 🏢 **Filtrado Semántico por Departamentos**: Permite acotar las respuestas a 10 dominios organizacionales específicos (RRHH, Finanzas, Operaciones, Legal, Marketing, Calidad, Sistemas, Estrategia, R&D y Comunicación).
+- 📊 **Trazabilidad y Citas Transparentes**: Cada respuesta generada incluye las fuentes de información exactas (nombre de archivo, departamento y tipo de documento) utilizadas como contexto.
+- 🔄 **Reindexación Dinámica en Tiempo Real**: Endpoint de API `/api/reindex` e interfaz gráfica con botón para reconstruir la base vectorial sin reiniciar el servicio cuando se agregan o actualizan documentos.
+- 🎨 **Interfaz de Usuario Moderna y Responsiva**: Diseñada en Dark Theme corporativo con tipografía Inter, tarjetas con sugerencias de preguntas rápidas, estados de carga animados e indicador de servidor en vivo.
+- ⚡ **Base de Datos Vectorial Persistente Autoreiterable**: ChromaDB con manejo transparente de colecciones y recreación dinámica ante cambios en las dimensiones de embeddings.
+
+---
+
+## 🏗️ Arquitectura del Sistema
+
+El sistema sigue una arquitectura por capas basada en microservicios ligeros con FastAPI y LangChain:
+
+```mermaid
+graph TD
+    User([👤 Usuario / Colaborador]) <-->|HTTP / REST API| Frontend[🎨 Frontend Web HTML5/CSS3/JS]
+    Frontend <-->|JSON Requests| FastAPI[⚡ FastAPI Server / Uvicorn]
+    
+    subgraph Core RAG Engine
+        FastAPI --> ChatService[🧠 Chat Service Manager]
+        ChatService --> VectorStore[💾 ChromaDB Vector Database]
+        ChatService --> Embeddings[🔤 Embeddings Engine]
+        ChatService --> MultiLLM[🤖 Multi-LLM Provider Engine]
+    end
+
+    subgraph External AI Services & Embeddings
+        Embeddings -->|Primary| Voyage[🧠 Voyage AI voyage-3-lite]
+        Embeddings -->|Fallback 1| CohereEmbed[🧠 Cohere embed-multilingual-v3.0]
+        Embeddings -->|Fallback 2| GeminiEmbed[🧠 Google Gemini gemini-embedding-2]
+
+        MultiLLM -->|Primary| Groq[🥇 Groq llama-3.3-70b-versatile]
+        MultiLLM -->|Fallback 1| CohereLLM[🥈 Cohere command-a-plus-05-2026]
+        MultiLLM -->|Fallback 2| GeminiLLM[🥉 Google Gemini gemini-3.5-flash-lite]
+    end
+
+    subgraph Data Ingestion
+        DocLoader[📄 Document Ingestion Engine] -->|PDF, DOCX, XLSX, PPTX, CSV, JSON, HTML, MD| DocumentFolder[(📁 documents/)]
+        DocumentFolder -->|Chunking & Metadata| VectorStore
+    end
+```
+
+---
+
+## 🔄 Flujo de Funcionamiento (RAG Engine)
+
+El ciclo de vida de una consulta dentro de **NovaGPU Assistant** consta de 6 etapas bien definidas:
+
+1. **Ingesta y Fragmentación (Chunking)**:  
+   `app/rag/loader.py` recorre la carpeta `documents/`, identifica el formato del archivo y utiliza cargadores especializados de LangChain (`PyPDFLoader`, `UnstructuredWordDocumentLoader`, `UnstructuredExcelLoader`, `UnstructuredPowerPointLoader`, `CSVLoader`, `JSONLoader`, `BSHTMLLoader`, `UnstructuredMarkdownLoader`). Los textos se dividen en fragmentos manejables con superposición (overlap) para preservar el contexto.
+
+2. **Generación de Vector Embeddings**:  
+   Cada fragmento de texto se convierte en un vector denso de alta dimensión usando el motor de embeddings configurado (`Voyage AI voyage-3-lite` por defecto, con fallback automático a `Cohere` o `Gemini`).
+
+3. **Almacenamiento e Indexación Vectorial**:  
+   Los vectores generados se persisten en **ChromaDB** (`chroma_db/`), etiquetados con metadatos clave como departamento, nombre de archivo y extensión.
+
+4. **Búsqueda Semántica de Similitud (Retrieval)**:  
+   Cuando el usuario realiza una pregunta (ej. *"¿Cuáles son los precios de las GPUs NovaGPU?"*), la consulta se vectoriza y ChromaDB realiza una búsqueda por similitud de coseno para recuperar los fragmentos más relevantes. Si el usuario seleccionó un filtro de departamento (ej. `marketing`), la búsqueda se restringe exclusivamente a ese metadato.
+
+5. **Aumento del Contexto y Prompting (Augmentation)**:  
+   `app/rag/prompts.py` ensambla las instrucciones del sistema, las restricciones de veracidad (solo responder basándose en los documentos cargados) y concatena los fragmentos recuperados junto con la pregunta original.
+
+6. **Inferencia y Respuesta con Fallback Ininterrumpido (Generation)**:  
+   `app/services/chat.py` envía la solicitud al proveedor principal de LLM (Groq con `llama-3.3-70b-versatile`). Si el servidor recibe una respuesta de límite de tasa (`HTTP 429`), el motor conmuta instantáneamente al segundo proveedor (Cohere con `command-a-plus-05-2026`) y, de ser necesario, al tercero (Google Gemini), garantizando la entrega de la respuesta al usuario sin errores.
+
+---
+
 ## ⚡ Tecnologías Principales
 
 - **Backend Web**: FastAPI (Python 3.10+) & Uvicorn Server
@@ -40,6 +127,69 @@ https://github.com/user-attachments/assets/9ce6e3f7-66f8-41b8-8deb-c2733f19c6c7
 - **Vector Database**: ChromaDB (Base de datos vectorial persistente con autorecreación ante cambios de dimensión)
 - **Orquestación RAG**: LangChain 0.3 (`langchain-cohere`, `langchain-google-genai`, `langchain-groq`, `langchain-voyageai`)
 - **Frontend**: HTML5, Vanilla CSS3 (Dark Theme corporativo) & JavaScript ES6+
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
+NovaGPU-Assistant/
+├── app/                        # Backend principal en FastAPI y RAG Engine
+│   ├── core/                   # Configuración del sistema y Pydantic Settings
+│   │   ├── __init__.py
+│   │   └── config.py           # Gestión de variables de entorno y proveedores
+│   ├── models/                 # Modelos y esquemas de datos HTTP
+│   │   ├── __init__.py
+│   │   └── schemas.py          # Schemas Pydantic (ChatRequest, ChatResponse)
+│   ├── rag/                    # Módulo central de RAG (Retrieval-Augmented Generation)
+│   │   ├── __init__.py
+│   │   ├── embeddings.py       # Gestor multi-proveedor de Embeddings con fallback
+│   │   ├── loader.py           # Cargador multiformato (PDF, DOCX, XLSX, PPTX, CSV, JSON, HTML, MD)
+│   │   ├── prompts.py          # Plantillas de Prompts de sistema estructurados
+│   │   └── vectorstore.py      # Integración y persistencia con ChromaDB
+│   ├── routes/                 # Enrutadores API de FastAPI
+│   │   ├── __init__.py
+│   │   └── chat_routes.py      # Endpoints REST (/api/chat, /api/reindex, /health)
+│   ├── services/               # Lógica de negocio y orquestación LLM
+│   │   ├── __init__.py
+│   │   └── chat.py             # Motor conversacional con conmutación automática por Rate Limit
+│   ├── utils/                  # Funciones auxiliares del sistema
+│   │   └── __init__.py
+│   └── main.py                 # Instancia principal de FastAPI, CORS y rutas estáticas
+├── assets/                     # Recursos multimedia de la documentación (imágenes, gifs, mp4)
+│   ├── .gitkeep
+│   ├── frontend-preview.png    # Captura principal del Frontend
+│   ├── demo.mp4                # Video de demostración de la aplicación
+│   ├── oci-dashboard.png       # Evidencia de instancia y Cloud Shell en OCI
+│   ├── oci-demo.mp4            # Video de demostración en Oracle Cloud
+│   └── oci-query-logs.png      # Evidencia de logs RAG en tiempo real en OCI
+├── chroma_db/                  # Base de datos vectorial persistente (ChromaDB / SQLite)
+├── documents/                  # Base de conocimientos corporativa organizada por departamentos
+│   ├── calidad/                # Normas ISO 9001:2015, planes CAPA
+│   ├── comunicacion/           # Newsletters HTML y comunicados corporativos
+│   ├── estrategia/             # Plan estratégico 2026-2028 y roadmap de productos
+│   ├── finanzas/               # Estados de resultados Q2 (CSV/XLSX) y presupuesto
+│   ├── investigacion/          # Estudios de mercado y R&D Nova Quantum V2
+│   ├── legal/                  # Políticas GDPR/LFPDPPP, código de ética y garantías
+│   ├── marketing/              # Catálogo MSRP de GPUs (CSV), precios y pitch deck
+│   ├── operaciones/            # Procesos de manufactura, logística y control de calidad
+│   ├── rrhh/                   # Beneficios HTML, organigrama CSV y política de vacaciones PDF
+│   └── sistemas/               # Especificación API JSON, ciberseguridad y manual OCI
+├── static/                     # Archivos estáticos del cliente web
+│   ├── script.js               # Cliente JS ES6+, llamadas API, renderizado Markdown y citas
+│   └── style.css               # Estilos CSS Vanilla (Dark Theme corporativo responsivo)
+├── templates/                  # Plantillas HTML
+│   └── index.html              # Interfaz de usuario SPA (Single Page Application)
+├── tests/                      # Suite de pruebas automatizadas
+│   ├── test_cohere.py          # Pruebas de integración con Cohere API
+│   └── test_vectorstore.py     # Pruebas de almacenamiento e indexación en ChromaDB
+├── .env.example                # Plantilla de variables de entorno del proyecto
+├── .gitignore                  # Reglas de exclusión de Git
+├── README.md                   # Documentación oficial del proyecto
+├── pyrightconfig.json          # Configuración del analizador estático Pyright / Pylance
+├── requirements.txt            # Dependencias del proyecto Python
+└── run.py                      # Script ejecutable de inicio rápido con Uvicorn
+```
 
 ---
 
@@ -273,5 +423,5 @@ https://github.com/user-attachments/assets/606782f4-ea97-4d43-9683-2d1d7ee9cb0e
 
 ## 📝 Licencia
 
-Proyecto desarrollado para el desafío de Inteligencia Artificial de **Alura Latam**.
+Proyecto desarrollado para el desafío de Inteligencia Artificial de **Alura Latam**.  
 © 2026 NovaGPU Technologies. Todos los derechos reservados.
