@@ -440,6 +440,8 @@ El proyecto se encuentra en desarrollo activo y evolución constante. Las siguie
   - Almacenamiento y recuperación de sesiones de chat previas asociadas al perfil del usuario.
 - [ ] 📊 **Panel de Analítica y Métricas de Rendimiento**:
   - Dashboard interactivo para administradores con estadísticas de uso, preguntas frecuentes y distribución de tráfico entre proveedores LLM (Groq, Cohere, Gemini).
+- [ ] 📱 **Optimización Avanzada de Interfaz Móvil**:
+  - Adaptación dinámica de viewport (`dvh`), ajuste del teclado táctil en smartphones y mejoras en la visibilidad del panel de conversación en dispositivos móviles.
 
 ---
 

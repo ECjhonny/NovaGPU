@@ -71,12 +71,14 @@ body {
     line-height: 1.6;
     overflow: hidden;
     height: 100vh;
+    height: 100dvh;
 }
 
 /* --- App Layout --- */
 .app-container {
     display: flex;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
@@ -895,12 +897,38 @@ body {
 }
 
 @media (max-width: 480px) {
+    .welcome-screen {
+        padding: 20px 12px;
+    }
+
     .welcome-screen h2 {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
 
     .welcome-screen p {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        margin-bottom: 16px;
+    }
+
+    .quick-actions {
+        gap: 8px;
+    }
+
+    .quick-action-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+    }
+
+    .chat-container {
+        padding: 12px;
+    }
+
+    .input-area {
+        padding: 8px 12px 12px;
+    }
+
+    .input-hint {
+        display: none;
     }
 }
 
