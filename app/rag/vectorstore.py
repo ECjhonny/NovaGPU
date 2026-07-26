@@ -102,20 +102,60 @@ def index_documents(documents: list[Document], batch_size: int = 15, force: bool
         ) from e
 
 
+def _is_embedding_rate_limit(error: Exception) -> bool:
+    """Determina si un error es de rate limit del proveedor de embeddings."""
+    err_str = str(error).lower()
+    return any(
+        term in err_str
+        for term in [
+            "429",
+            "rate limit",
+            "rate_limit",
+            "ratelimit",
+            "too many requests",
+            "resource_exhausted",
+            "resourceexhausted",
+            "quota exceeded",
+            "quota_exceeded",
+            "rpm",
+            "tpm",
+            "try again later",
+            "exceeded your current quota",
+        ]
+    )
+
+
 def search_documents(
     query: str, k: int = TOP_K_RESULTS, department: str | None = None
 ) -> list[Document]:
-    """Busca documentos relevantes en el vector store."""
+    """
+    Busca documentos relevantes en el vector store.
+    Incluye reintentos automáticos ante rate limits del proveedor de embeddings.
+    """
     vectorstore = get_vectorstore()
 
     search_kwargs: dict[str, Any] = {"k": k}
     if department:
         search_kwargs["filter"] = {"department": department}
 
-    results = vectorstore.similarity_search(query, **search_kwargs)
-    logger.info(f"🔍 Búsqueda: '{query[:50]}...' → {len(results)} resultados")
+    max_retries = 4
+    for attempt in range(max_retries):
+        try:
+            results = vectorstore.similarity_search(query, **search_kwargs)
+            logger.info(f"🔍 Búsqueda: '{query[:50]}...' → {len(results)} resultados")
+            return results
+        except Exception as e:  # noqa: BLE001
+            if _is_embedding_rate_limit(e) and attempt < max_retries - 1:
+                wait_time = 10 * (attempt + 1)
+                logger.warning(
+                    f"⚠️ Rate limit en embeddings (búsqueda). "
+                    f"Reintentando en {wait_time}s ({attempt + 1}/{max_retries})..."
+                )
+                time.sleep(wait_time)
+            else:
+                raise
 
-    return results
+    return []  # Fallback de seguridad
 
 
 def get_retriever(k: int = TOP_K_RESULTS, department: str | None = None):
