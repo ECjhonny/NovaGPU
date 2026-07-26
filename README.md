@@ -21,7 +21,6 @@ El asistente funciona como una **base de conocimiento conversacional centralizad
 ![Interfaz Principal de NovaGPU Assistant](assets/frontend-preview.png)
 
 ### 🎥 Demostración de Funcionamiento
-![Demostración en vivo](assets/demo.mp4)
 
 https://github.com/user-attachments/assets/9ce6e3f7-66f8-41b8-8deb-c2733f19c6c7
 
