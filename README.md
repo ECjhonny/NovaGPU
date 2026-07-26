@@ -445,5 +445,5 @@ El proyecto se encuentra en desarrollo activo y evolución constante. Las siguie
 
 ## 📝 Licencia
 
-Proyecto desarrollado para el desafío de Inteligencia Artificial de **Alura Latam**.  
+Proyecto desarrollado para el Challenge de Inteligencia Artificial de **Alura Latam**.  
 © 2026 NovaGPU Technologies. Todos los derechos reservados.
