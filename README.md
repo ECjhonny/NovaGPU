@@ -20,7 +20,8 @@
 9. [🛠️ Instalación y Ejecución Local](#️-instalación-y-ejecución-local)
 10. [🤖 Modelos de LLM y Embeddings Soportados](#-modelos-de-llm-y-embeddings-soportados)
 11. [☁️ Despliegue en Oracle Cloud Infrastructure (OCI)](#️-despliegue-en-oracle-cloud-infrastructure-oci)
-12. [📝 Licencia](#-licencia)
+12. [🚀 Roadmap y Mejoras Futuras](#-roadmap-y-mejoras-futuras)
+13. [📝 Licencia](#-licencia)
 
 ---
 
@@ -29,6 +30,10 @@
 **NovaGPU Assistant** es un agente de Inteligencia Artificial abierto a todos los colaboradores de **NovaGPU Technologies**, una empresa ficticia dedicada al diseño y fabricación de tarjetas gráficas (GPUs) de alto rendimiento para gaming, estaciones de trabajo y supercómputo de Inteligencia Artificial.
 
 El asistente funciona como una **base de conocimiento conversacional centralizada**, respondiendo preguntas en tiempo real mediante técnicas de **RAG (Retrieval-Augmented Generation)** procesando la documentación oficial de la organización.
+
+> [!NOTE]
+> 🚧 **Estado del Proyecto: En Desarrollo Activo (WIP)**  
+> **NovaGPU Assistant** se encuentra en constante evolución y mejora continua. Si bien el motor de RAG, el sistema de fallback multi-proveedor por límites de cuota y la interfaz conversacional están 100% funcionales y operativos 24/7, el sistema se encuentra en fase de incorporación de nuevos módulos clave de administración y seguridad.
 
 ---
 
@@ -418,6 +423,23 @@ https://github.com/user-attachments/assets/606782f4-ea97-4d43-9683-2d1d7ee9cb0e
 
 #### ⚡ Consulta RAG y Logs de Inferencia en Tiempo Real
 ![Respuesta RAG y Telemetría en OCI](assets/oci-query-logs.png)
+
+---
+
+## 🚀 Roadmap y Mejoras Futuras
+
+El proyecto se encuentra en desarrollo activo y evolución constante. Las siguientes características principales están planificadas para las próximas versiones:
+
+- [ ] 🔑 **Sistema de Autenticación y Login de Usuarios (AuthN / AuthZ)**:
+  - Módulo de inicio de sesión y registro seguro mediante **JWT** (JSON Web Tokens) u **OAuth2**.
+  - Control de acceso basado en roles (**RBAC**) para restringir la visibilidad de documentos confidenciales según el departamento o nivel del colaborador autenticado.
+- [ ] 📤 **Gestión y Carga de Documentación desde la Interfaz Web**:
+  - Módulo interactivo de carga de archivos (Drag & Drop) en el frontend sin necesidad de acceso SSH al servidor.
+  - Procesamiento, fragmentación e indexación automática en tiempo real en la base de datos vectorial ChromaDB inmediatamente tras subir un nuevo documento.
+- [ ] 💬 **Persistencia de Historial Conversacional por Usuario**:
+  - Almacenamiento y recuperación de sesiones de chat previas asociadas al perfil del usuario.
+- [ ] 📊 **Panel de Analítica y Métricas de Rendimiento**:
+  - Dashboard interactivo para administradores con estadísticas de uso, preguntas frecuentes y distribución de tráfico entre proveedores LLM (Groq, Cohere, Gemini).
 
 ---
 
