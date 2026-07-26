@@ -261,6 +261,8 @@ sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
 
 ### 📸 Evidencia de Despliegue y Telemetría en OCI
 
+https://github.com/user-attachments/assets/606782f4-ea97-4d43-9683-2d1d7ee9cb0e
+
 #### 🖥️ Instancia OCI y Consola de Cloud Shell
 ![Monitoreo de Recursos y Logs en OCI](assets/oci-dashboard.png)
 
