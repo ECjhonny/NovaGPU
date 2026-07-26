@@ -148,7 +148,7 @@ Accede desde tu navegador:
 
 ## ☁️ Despliegue en Oracle Cloud Infrastructure (OCI)
 
-El proyecto está desplegado y probado en la nube de **Oracle Cloud Infrastructure (OCI)**.
+El proyecto está desplegado y probado en la nube de **Oracle Cloud Infrastructure (OCI)** con Oracle Linux.
 
 ### 1. Crear Compute Instance
 Crear una máquina virtual en OCI con **Oracle Linux 8/9** o **Ubuntu 22.04 LTS**.
@@ -157,22 +157,22 @@ Crear una máquina virtual en OCI con **Oracle Linux 8/9** o **Ubuntu 22.04 LTS*
 En la consola de OCI → **Networking** → **VCN** → **Security List**, agregar regla de ingreso:
 - **Source CIDR**: `0.0.0.0/0` | **Protocol**: TCP | **Port**: `80, 8000`
 
-### 3. Abrir puertos en el firewall del OS
+### 3. Abrir puertos en el firewall del OS y deshabilitar Apache
 ```bash
-# Oracle Linux (firewalld)
+# Oracle Linux: Abrir puertos en firewalld
 sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --permanent --add-port=8000/tcp
 sudo firewall-cmd --reload
 
-# Ubuntu (iptables)
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 8000 -j ACCEPT
-sudo netfilter-persistent save
+# Detener y deshabilitar Apache (viene activo por defecto en Oracle Linux y ocupa el puerto 80)
+sudo systemctl stop httpd
+sudo systemctl disable httpd
 ```
 
 ### 4. Instalar dependencias y clonar
 ```bash
-sudo dnf install -y python3 python3-pip git nginx   # Oracle Linux
+sudo dnf install -y python3 python3-pip git nginx
 git clone https://github.com/ECjhonny/NovaGPU.git NovaGPU
 cd NovaGPU
 python3 -m venv venv && source venv/bin/activate
@@ -181,6 +181,9 @@ cp .env.example .env && nano .env   # Configurar API Keys
 ```
 
 ### 5. Configurar servicio systemd (ejecución 24/7)
+
+> ⚠️ **Importante:** ChromaDB usa SQLite internamente, que no soporta accesos concurrentes. Se debe usar `--workers 1` para evitar errores de colección no encontrada.
+
 ```bash
 sudo nano /etc/systemd/system/novagpu.service
 ```
@@ -192,7 +195,7 @@ After=network.target
 [Service]
 User=opc
 WorkingDirectory=/home/opc/NovaGPU
-ExecStart=/home/opc/NovaGPU/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+ExecStart=/home/opc/NovaGPU/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 Restart=always
 RestartSec=5
 EnvironmentFile=/etc/novagpu.env
@@ -207,7 +210,17 @@ sudo systemctl enable novagpu
 sudo systemctl start novagpu
 ```
 
-### 6. Configurar Nginx como Reverse Proxy (opcional)
+### 6. Configurar Nginx como Reverse Proxy
+
+En Oracle Linux, la configuración de Nginx se gestiona desde `/etc/nginx/conf.d/`.
+
+```bash
+# Habilitar SELinux para permitir que Nginx haga proxy a FastAPI
+sudo setsebool -P httpd_can_network_connect 1
+
+# Crear archivo de configuración
+sudo nano /etc/nginx/conf.d/novagpu.conf
+```
 ```nginx
 server {
     listen 80;
@@ -217,18 +230,21 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 ```bash
-sudo ln -s /etc/nginx/sites-available/novagpu /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl restart nginx
+# Comentar el bloque server por defecto en nginx.conf para evitar conflictos (si existe)
+# sudo nano /etc/nginx/nginx.conf → comentar el bloque "server { listen 80; ... }"
+
+sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
 ```
 
 ### 7. Verificar
 - **Chat**: `http://<IP_PUBLICA_OCI>`
 - **Swagger**: `http://<IP_PUBLICA_OCI>/docs`
-- **Logs**: `sudo journalctl -u novagpu -f`
+- **Logs en tiempo real**: `sudo journalctl -u novagpu -f`
 
 ---
 
