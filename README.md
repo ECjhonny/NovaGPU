@@ -259,6 +259,14 @@ sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
 - **Documentación Swagger**: [http://149.130.172.8:8000/docs](http://149.130.172.8:8000/docs)
 - **Logs en tiempo real**: `sudo journalctl -u novagpu -f`
 
+### 📸 Evidencia de Despliegue y Telemetría en OCI
+
+#### 🖥️ Instancia OCI y Consola de Cloud Shell
+![Monitoreo de Recursos y Logs en OCI](assets/oci-dashboard.png)
+
+#### ⚡ Consulta RAG y Logs de Inferencia en Tiempo Real
+![Respuesta RAG y Telemetría en OCI](assets/oci-query-logs.png)
+
 ---
 
 ## 📝 Licencia
