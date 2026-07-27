@@ -470,10 +470,15 @@ El proyecto se encuentra en desarrollo activo y evolución constante. Las siguie
 - [x] 📤 **Gestión y Carga de Documentación desde la Interfaz Web**:
   - Módulo interactivo de carga de archivos (Drag & Drop) y eliminación de documentos en el frontend sin necesidad de acceso SSH al servidor.
   - Endpoints REST dedicados (`/api/documents`, `/api/documents/upload`, `/api/documents/{department}/{filename}`) con validación de extensiones y protección path traversal.
+- [ ] 🤖 **Integración de Nuevos Modelos LLM y Selector Dinámico en la UI**:
+  - Incorporación de modelos de razonamiento avanzado (**DeepSeek-R1**, **Claude 3.5 Sonnet**, **GPT-4o**, **Llama 3.3**) a través del motor multi-proveedor de OpenRouter.
+  - Selector desplegable en la interfaz web para permitir al usuario alternar entre diferentes modelos LLM en tiempo real.
+- [ ] 🏠 **Soporte para LLMs Locales y Despliegue Offline (Ollama)**:
+  - Integración con **Ollama** para ejecutar modelos de lenguaje locales (ej. Llama 3, Mistral) en entornos corporativos cerrados (*air-gapped*) sin dependencia de APIs externas.
 - [ ] 💬 **Persistencia de Historial Conversacional por Usuario**:
   - Almacenamiento y recuperación de sesiones de chat previas asociadas al perfil del usuario.
 - [ ] 📊 **Panel de Analítica y Métricas de Rendimiento**:
-  - Dashboard interactivo para administradores con estadísticas de uso, preguntas frecuentes y distribución de tráfico entre proveedores LLM (Groq, Cohere, Gemini).
+  - Dashboard interactivo para administradores con estadísticas de uso, preguntas frecuentes y distribución de tráfico entre proveedores LLM (OpenRouter, Groq, Cohere, Gemini).
 - [ ] 📱 **Optimización Avanzada de Interfaz Móvil**:
   - Adaptación dinámica de viewport (`dvh`), ajuste del teclado táctil en smartphones y mejoras en la visibilidad del panel de conversación en dispositivos móviles.
 
