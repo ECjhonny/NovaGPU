@@ -111,14 +111,22 @@ async def upload_document(
             detail=f"Departamento inválido. Debe ser uno de: {', '.join(DEPARTMENTS)}"
         )
 
-    file_ext = Path(file.filename).suffix.lower()
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo enviado no tiene un nombre válido."
+        )
+
+    filename = file.filename
+
+    file_ext = Path(filename).suffix.lower()
     if file_ext not in SUPPORTED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Extensión no permitida. Formatos soportados: {', '.join(SUPPORTED_EXTENSIONS)}"
         )
 
-    safe_filename = Path(file.filename).name
+    safe_filename = Path(filename).name
     dept_dir = DOCUMENTS_DIR / department
     dept_dir.mkdir(parents=True, exist_ok=True)
     target_path = dept_dir / safe_filename

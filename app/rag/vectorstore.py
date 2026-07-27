@@ -163,8 +163,8 @@ def search_documents(
                 )
                 try:
                     reset_vectorstore()
-                    from app.rag.loader import load_and_split_documents
-                    docs = load_and_split_documents()
+                    from app.rag.loader import load_and_split
+                    docs = load_and_split()
                     index_documents(docs, force=True)
                     vectorstore = get_vectorstore()
                     return vectorstore.similarity_search(query, **search_kwargs)
