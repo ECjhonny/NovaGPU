@@ -1,5 +1,14 @@
 """Módulo de vectorstore para el flujo RAG."""
 
+# Fix para compatibilidad con ChromaDB en entornos Linux (Oracle Linux / RHEL / CentOS)
+try:
+    __import__("pysqlite3")
+    import sys
+
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+except ImportError:
+    pass
+
 import time
 from typing import Any
 
@@ -11,6 +20,7 @@ from app.rag.embeddings import get_embeddings
 from app.utils import get_logger
 
 logger = get_logger(__name__)
+
 
 _vectorstore: Chroma | None = None
 
