@@ -51,13 +51,14 @@ https://github.com/user-attachments/assets/9ce6e3f7-66f8-41b8-8deb-c2733f19c6c7
 ## ✨ Características Principales
 
 - 🧠 **Arquitectura RAG Multiformato de Alto Rendimiento**: Procesa e indexa automáticamente 8+ formatos de documentos corporativos (PDF, Word, Excel, PowerPoint, Markdown, CSV, JSON, HTML).
+- 📁 **Gestión de Documentos desde la UI**: Modal interactivo en el cliente web para subir (vía Drag & Drop o selector de archivos) y eliminar documentos organizados por departamento en tiempo real, sin requerir acceso SSH al servidor.
 - 🛡️ **Sistema de Fallback Ininterrumpido (Resiliencia 24/7)**: Conmutación automática en milisegundos entre 4 proveedores de LLM principales (**OpenRouter**, **Google Gemini**, **Groq** y **Cohere**) para garantizar disponibilidad continua ante límites de cuota (HTTP 429 Rate Limits).
 - 🔒 **Guardrails de Ámbito Corporativo (Out-of-Domain Protection)**: Restricción estricta mediante *System Prompt* para rechazar amablemente preguntas de conocimiento general, matemáticas o trivia ajenas a la empresa, garantizando que el asistente responda **únicamente sobre la documentación interna de NovaGPU Technologies**.
-- 🏢 **Filtrado Semántico por Departamentos**: Permite acotar las respuestas a 10 dominios organizacionales específicos (RRHH, Finanzas, Operaciones, Legal, Marketing, Calidad, Sistemas, Estrategia, R&D y Comunicación).
+- 🏢 **Filtrado Semántico por Departamentos**: Permite acotar las respuestas a dominios organizacionales específicos (RRHH, Finanzas, Operaciones, Marketing).
 - 📊 **Trazabilidad y Citas Transparentes**: Cada respuesta generada incluye las fuentes de información exactas (nombre de archivo, departamento y tipo de documento) utilizadas como contexto.
-- 🔄 **Reindexación Dinámica en Tiempo Real**: Endpoint de API `/api/reindex` e interfaz gráfica con botón para reconstruir la base vectorial sin reiniciar el servicio cuando se agregan o actualizan documentos.
-- 🎨 **Interfaz de Usuario Moderna y Responsiva**: Diseñada en Dark Theme corporativo con tipografía Inter, tarjetas con sugerencias de preguntas rápidas, estados de carga animados e indicador de servidor en vivo.
-- ⚡ **Base de Datos Vectorial Persistente Autoreiterable**: ChromaDB con manejo transparente de colecciones y recreación dinámica ante cambios en las dimensiones de embeddings.
+- 🔄 **Reindexación Dinámica en Tiempo Real**: Endpoint de API `/api/index` e interfaz gráfica con botón para reconstruir la base vectorial sin reiniciar el servicio cuando se agregan o quitan documentos.
+- 🎨 **Interfaz de Usuario Moderna y Responsiva**: Diseñada en Dark Theme corporativo con tipografía Inter, modal de gestión de archivos, sugerencias rápidas, estados de carga animados e indicador de servidor en vivo.
+- ⚡ **Base de Datos Vectorial Persistente Autoreiterable**: ChromaDB con manejo transparente de colecciones, compatibilidad con SQLite 3.35+ en servidores Linux (OCI) mediante `pysqlite3-binary` y recreación dinámica ante cambios de dimensión.
 
 ---
 
@@ -174,22 +175,16 @@ NovaGPU-Assistant/
 │   ├── oci-demo.mp4            # Video de demostración en Oracle Cloud
 │   └── oci-query-logs.png      # Evidencia de logs RAG en tiempo real en OCI
 ├── chroma_db/                  # Base de datos vectorial persistente (ChromaDB / SQLite)
-├── documents/                  # Base de conocimientos corporativa organizada por departamentos
-│   ├── calidad/                # Normas ISO 9001:2015, planes CAPA
-│   ├── comunicacion/           # Newsletters HTML y comunicados corporativos
-│   ├── estrategia/             # Plan estratégico 2026-2028 y roadmap de productos
-│   ├── finanzas/               # Estados de resultados Q2 (CSV/XLSX) y presupuesto
-│   ├── investigacion/          # Estudios de mercado y R&D Nova Quantum V2
-│   ├── legal/                  # Políticas GDPR/LFPDPPP, código de ética y garantías
-│   ├── marketing/              # Catálogo MSRP de GPUs (CSV), precios y pitch deck
-│   ├── operaciones/            # Procesos de manufactura, logística y control de calidad
-│   ├── rrhh/                   # Beneficios HTML, organigrama CSV y política de vacaciones PDF
-│   └── sistemas/               # Especificación API JSON, ciberseguridad y manual OCI
+├── documents/                  # Base de conocimientos corporativa organizada por departamentos fundamentales
+│   ├── finanzas/               # Presupuesto, política de viajes y reembolsos
+│   ├── marketing/              # Catálogo MSRP de GPUs, especificaciones y precios
+│   ├── operaciones/            # Procesos de manufactura, ensamblaje y logística de GPUs
+│   └── rrhh/                   # Políticas de vacaciones, licencias y código de conducta
 ├── static/                     # Archivos estáticos del cliente web
-│   ├── script.js               # Cliente JS ES6+, llamadas API, renderizado Markdown y citas
-│   └── style.css               # Estilos CSS Vanilla (Dark Theme corporativo responsivo)
+│   ├── script.js               # Cliente JS ES6+, gestión de documentos (Upload/Delete), llamadas API y Markdown
+│   └── style.css               # Estilos CSS Vanilla (Dark Theme corporativo responsivo + modal)
 ├── templates/                  # Plantillas HTML
-│   └── index.html              # Interfaz de usuario SPA (Single Page Application)
+│   └── index.html              # Interfaz de usuario SPA con modal de gestión de documentos
 ├── tests/                      # Suite de pruebas automatizadas
 │   ├── test_cohere.py          # Pruebas de integración con Cohere API
 │   └── test_vectorstore.py     # Pruebas de almacenamiento e indexación en ChromaDB
@@ -205,29 +200,23 @@ NovaGPU-Assistant/
 
 ## 📄 Cobertura de Formatos y Categorías de Documentos
 
-El agente comprende y procesa automáticamente 8+ formatos de archivo en 10 áreas clave de la organización:
+El agente comprende y procesa automáticamente 8+ formatos de archivo organizados en los 4 departamentos clave de la organización:
 
 ### 📁 Formatos de Archivo Soportados
-- **PDF** (`.pdf`) — Manuales de calidad y políticas
-- **Word** (`.docx`) — Procedimientos y contratos
-- **Excel** (`.xlsx`) — Estados financieros y presupuestos
-- **PowerPoint** (`.pptx`) — Presentaciones de roadmap
-- **Markdown** (`.md`) — Documentación técnica, políticas y minutas
-- **CSV** (`.csv`) — Organigramas, estados de resultados y catálogo de precios
-- **JSON** (`.json`) — Especificación de APIs internas y telemetría
-- **HTML** (`.html`) — Newsletters internas y planes de beneficios
+- **PDF** (`.pdf`) — Políticas internas y manuales corporativos
+- **Word** (`.docx`) — Procedimientos y normativas
+- **Excel** (`.xlsx`) — Presupuestos y datos cuantitativos
+- **PowerPoint** (`.pptx`) — Presentaciones corporativas
+- **Markdown** (`.md`) — Documentación técnica y guías internas
+- **CSV** (`.csv`) — Catálogo de precios y datos estructurados
+- **JSON** (`.json`) — Datos de configuración y especificaciones
+- **HTML** (`.html`) — Comunicados y documentos web internos
 
-### 🏢 Dominios Organizacionales (10 Categorías)
-1. **Recursos Humanos (`rrhh`)**: Políticas de vacaciones, onboarding, beneficios (HTML) y estructura organizacional (CSV).
-2. **Financiero y Contable (`finanzas`)**: Estados de resultados Q2 (CSV), presupuesto anual y política de reembolsos.
-3. **Operacional (`operaciones`)**: Procesos de manufactura de GPUs, control de calidad en línea y logística.
-4. **Legal y Compliance (`legal`)**: Términos de garantía, políticas GDPR/LFPDPPP y código de ética.
-5. **Marketing y Comercial (`marketing`)**: Catálogo de GPUs (CSV), precios MSRP, manual de marca y pitch deck.
-6. **Calidad (`calidad`)**: Plan de auditorías ISO 9001:2015, plan CAPA y estándares de producto.
-7. **Datos y Sistemas (`sistemas`)**: API interna (JSON), ciberseguridad y manual de nube OCI.
-8. **Estratégico (`estrategia`)**: Plan estratégico 2026-2028 y roadmap tecnológico de GPUs.
-9. **Investigación y Desarrollo (`investigacion`)**: Estudio de mercado de GPUs y business case Nova Quantum V2.
-10. **Comunicación Interna (`comunicacion`)**: Comunicados ejecutivos, boletín mensual (HTML) y minutas de dirección.
+### 🏢 Dominios Organizacionales (4 Departamentos Fundamentales)
+1. **Recursos Humanos (`rrhh`)**: Políticas de vacaciones, licencias, código de conducta y beneficios corporativos.
+2. **Finanzas (`finanzas`)**: Política de gastos, reembolsos de viajes de negocios y presupuesto.
+3. **Operaciones (`operaciones`)**: Procesos de manufactura de GPUs NovaGPU, logística y ensamblaje.
+4. **Marketing (`marketing`)**: Especificaciones de tarjetas gráficas, precios MSRP y catálogo de productos.
 
 ---
 
@@ -359,6 +348,8 @@ pip install --upgrade pip && pip install -r requirements.txt
 cp .env.example .env && nano .env   # Configurar API Keys
 ```
 
+> 💡 **Nota sobre actualizaciones en OCI**: Tras hacer `git pull` en el servidor, ejecuta siempre `venv/bin/pip install -r requirements.txt` para asegurar la instalación de dependencias nuevas (como `langchain-openai` y `pysqlite3-binary` para la compatibilidad de SQLite con ChromaDB).
+
 ### 5. Configurar servicio systemd (ejecución 24/7)
 
 > ⚠️ **Importante:** ChromaDB usa SQLite internamente, que no soporta accesos concurrentes. Se debe usar `--workers 1` para evitar errores de colección no encontrada.
@@ -444,9 +435,9 @@ El proyecto se encuentra en desarrollo activo y evolución constante. Las siguie
 - [ ] 🔑 **Sistema de Autenticación y Login de Usuarios (AuthN / AuthZ)**:
   - Módulo de inicio de sesión y registro seguro mediante **JWT** (JSON Web Tokens) u **OAuth2**.
   - Control de acceso basado en roles (**RBAC**) para restringir la visibilidad de documentos confidenciales según el departamento o nivel del colaborador autenticado.
-- [ ] 📤 **Gestión y Carga de Documentación desde la Interfaz Web**:
-  - Módulo interactivo de carga de archivos (Drag & Drop) en el frontend sin necesidad de acceso SSH al servidor.
-  - Procesamiento, fragmentación e indexación automática en tiempo real en la base de datos vectorial ChromaDB inmediatamente tras subir un nuevo documento.
+- [x] 📤 **Gestión y Carga de Documentación desde la Interfaz Web**:
+  - Módulo interactivo de carga de archivos (Drag & Drop) y eliminación de documentos en el frontend sin necesidad de acceso SSH al servidor.
+  - Endpoints REST dedicados (`/api/documents`, `/api/documents/upload`, `/api/documents/{department}/{filename}`) con validación de extensiones y protección path traversal.
 - [ ] 💬 **Persistencia de Historial Conversacional por Usuario**:
   - Almacenamiento y recuperación de sesiones de chat previas asociadas al perfil del usuario.
 - [ ] 📊 **Panel de Analítica y Métricas de Rendimiento**:
