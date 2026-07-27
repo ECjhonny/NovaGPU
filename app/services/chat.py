@@ -53,6 +53,14 @@ logger = get_logger(__name__)
 _chat_sessions: dict[str, ConversationBufferWindowMemory] = {}
 
 
+def _is_valid_key(key: str) -> bool:
+    """Verifica que una clave de API no esté vacía ni sea una plantilla de ejemplo."""
+    if not key or not key.strip():
+        return False
+    k = key.strip().lower()
+    return not ("tu_clave" in k or k == "gsk_tu_clave_groq_aqui")
+
+
 def _get_all_llms() -> list[tuple[str, Any]]:
     """
     Retorna una lista ordenada de todos los LLMs disponibles.
@@ -65,7 +73,7 @@ def _get_all_llms() -> list[tuple[str, Any]]:
     # Definir constructores para cada proveedor
     builders: dict[str, tuple[str, Any] | None] = {}
 
-    if OPENROUTER_API_KEY and ChatOpenAI is not None:
+    if _is_valid_key(OPENROUTER_API_KEY) and ChatOpenAI is not None:
         builders["openrouter"] = (
             f"OpenRouter ({OPENROUTER_MODEL})",
             ChatOpenAI(
@@ -76,7 +84,7 @@ def _get_all_llms() -> list[tuple[str, Any]]:
             ),
         )
 
-    if COHERE_API_KEY and ChatCohere is not None:
+    if _is_valid_key(COHERE_API_KEY) and ChatCohere is not None:
         builders["cohere"] = (
             f"Cohere ({COHERE_MODEL})",
             ChatCohere(
@@ -86,7 +94,7 @@ def _get_all_llms() -> list[tuple[str, Any]]:
             ),
         )
 
-    if GEMINI_API_KEY and ChatGoogleGenerativeAI is not None:
+    if _is_valid_key(GEMINI_API_KEY) and ChatGoogleGenerativeAI is not None:
         builders["gemini"] = (
             f"Gemini ({GEMINI_MODEL})",
             ChatGoogleGenerativeAI(
@@ -96,7 +104,7 @@ def _get_all_llms() -> list[tuple[str, Any]]:
             ),
         )
 
-    if GROQ_API_KEY and ChatGroq is not None:
+    if _is_valid_key(GROQ_API_KEY) and ChatGroq is not None:
         builders["groq"] = (
             f"Groq ({GROQ_MODEL})",
             ChatGroq(
@@ -140,7 +148,7 @@ def _get_all_llms() -> list[tuple[str, Any]]:
 def _is_rate_limit_error(error: Exception) -> bool:
     """
     Determina si una excepción es un error de rate limit / cuota excedida.
-    Cubre los códigos y mensajes de Cohere, Gemini y Groq.
+    Cubre los códigos y mensajes de OpenRouter, Cohere, Gemini y Groq.
     """
     err_str = str(error).lower()
     rate_limit_indicators = [
@@ -184,8 +192,8 @@ def chat(
 ) -> dict[str, Any]:
     """
     Procesa una pregunta del usuario y retorna la respuesta.
-    Implementa fallback automático: si un proveedor LLM falla por rate limit,
-    intenta automáticamente con el siguiente proveedor disponible.
+    Implementa fallback automático: si un proveedor LLM falla por cualquier motivo
+    (rate limit, error de cuota o autenticación), conmuta al siguiente proveedor disponible.
     """
     try:
         logger.info(f"💬 Pregunta [{session_id}]: {question[:80]}...")
@@ -260,16 +268,12 @@ def chat(
                 return formatted
 
             except Exception as llm_error:  # noqa: BLE001
-                if _is_rate_limit_error(llm_error):
-                    logger.warning(
-                        f"⚠️ Rate limit en {provider_name}: {llm_error}. "
-                        "Intentando siguiente proveedor..."
-                    )
-                    last_error = llm_error
-                    continue
-                else:
-                    # Error no relacionado con rate limit → propagar
-                    raise
+                logger.warning(
+                    f"⚠️ Fallo en proveedor {provider_name}: {llm_error}. "
+                    "Intentando automáticamente con el siguiente proveedor disponible..."
+                )
+                last_error = llm_error
+                continue
 
         # Si llegamos aquí, TODOS los proveedores alcanzaron su rate limit
         logger.error(

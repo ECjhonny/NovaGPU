@@ -42,12 +42,20 @@ from app.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _is_valid_key(key: str) -> bool:
+    """Verifica que una clave de API no esté vacía ni sea una plantilla de ejemplo."""
+    if not key or not key.strip():
+        return False
+    k = key.strip().lower()
+    return not ("tu_clave" in k or k == "gsk_tu_clave_groq_aqui")
+
+
 def get_embeddings() -> Any:
     """Retorna una instancia configurada del modelo de embeddings (Voyage AI, OpenRouter, Gemini o Cohere)."""
     provider = EMBEDDINGS_PROVIDER.lower()
 
     def _try_voyage() -> Any | None:
-        if VOYAGE_API_KEY and VoyageAIEmbeddings is not None:
+        if _is_valid_key(VOYAGE_API_KEY) and VoyageAIEmbeddings is not None:
             logger.info(
                 f"🧠 Modelo de embeddings Voyage AI configurado: {VOYAGE_EMBEDDING_MODEL}"
             )
@@ -58,7 +66,7 @@ def get_embeddings() -> Any:
         return None
 
     def _try_openrouter() -> Any | None:
-        if OPENROUTER_API_KEY and OpenAIEmbeddings is not None:
+        if _is_valid_key(OPENROUTER_API_KEY) and OpenAIEmbeddings is not None:
             logger.info(
                 f"🧠 Modelo de embeddings OpenRouter configurado: {OPENROUTER_EMBEDDING_MODEL}"
             )
@@ -71,7 +79,7 @@ def get_embeddings() -> Any:
         return None
 
     def _try_gemini() -> Any | None:
-        if GEMINI_API_KEY and GoogleGenerativeAIEmbeddings is not None:
+        if _is_valid_key(GEMINI_API_KEY) and GoogleGenerativeAIEmbeddings is not None:
             logger.info(
                 f"🧠 Modelo de embeddings Gemini configurado: {GEMINI_EMBEDDING_MODEL}"
             )
@@ -82,7 +90,7 @@ def get_embeddings() -> Any:
         return None
 
     def _try_cohere() -> Any | None:
-        if COHERE_API_KEY and CohereEmbeddings is not None:
+        if _is_valid_key(COHERE_API_KEY) and CohereEmbeddings is not None:
             logger.info(
                 f"🧠 Modelo de embeddings Cohere configurado: {COHERE_EMBEDDING_MODEL}"
             )
