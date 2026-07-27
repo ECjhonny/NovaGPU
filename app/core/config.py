@@ -28,7 +28,7 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # --- Configuración de Cohere (LLM & Embeddings) ---
 COHERE_API_KEY = os.getenv("COHERE_API_KEY", "")
-COHERE_MODEL = os.getenv("COHERE_MODEL", "command-r-plus")
+COHERE_MODEL = os.getenv("COHERE_MODEL", "command-a-plus-05-2026")
 COHERE_EMBEDDING_MODEL = os.getenv("COHERE_EMBEDDING_MODEL", "embed-multilingual-v3.0")
 
 # --- Configuración de Voyage AI (Embeddings) ---
@@ -42,7 +42,7 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
 # --- Configuración de Gemini (LLM & Embeddings) ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
 
 # --- Configuración de RAG ---
