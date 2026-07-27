@@ -17,11 +17,13 @@
 6. [⚡ Tecnologías Principales](#-tecnologías-principales)
 7. [📁 Estructura del Proyecto](#-estructura-del-proyecto)
 8. [📄 Cobertura de Formatos y Categorías de Documentos](#-cobertura-de-formatos-y-categorías-de-documentos)
-9. [🛠️ Instalación y Ejecución Local](#️-instalación-y-ejecución-local)
-10. [🤖 Modelos de LLM y Embeddings Soportados](#-modelos-de-llm-y-embeddings-soportados)
-11. [☁️ Despliegue en Oracle Cloud Infrastructure (OCI)](#️-despliegue-en-oracle-cloud-infrastructure-oci)
-12. [🚀 Roadmap y Mejoras Futuras](#-roadmap-y-mejoras-futuras)
-13. [📝 Licencia](#-licencia)
+9. [💡 Preguntas Sugeridas de Prueba](#-preguntas-sugeridas-de-prueba)
+10. [🛠️ Instalación y Ejecución Local](#️-instalación-y-ejecución-local)
+11. [🤖 Modelos de LLM y Embeddings Soportados](#-modelos-de-llm-y-embeddings-soportados)
+12. [☁️ Despliegue en Oracle Cloud Infrastructure (OCI)](#️-despliegue-en-oracle-cloud-infrastructure-oci)
+13. [🚀 Roadmap y Mejoras Futuras](#-roadmap-y-mejoras-futuras)
+14. [📝 Licencia](#-licencia)
+
 
 ---
 
@@ -215,12 +217,42 @@ El agente comprende y procesa automáticamente 8+ formatos de archivo organizado
 ### 🏢 Dominios Organizacionales (4 Departamentos Fundamentales)
 1. **Recursos Humanos (`rrhh`)**: Políticas de vacaciones, licencias, código de conducta y beneficios corporativos.
 2. **Finanzas (`finanzas`)**: Política de gastos, reembolsos de viajes de negocios y presupuesto.
-3. **Operaciones (`operaciones`)**: Procesos de manufactura de GPUs NovaGPU, logística y ensamblaje.
-4. **Marketing (`marketing`)**: Especificaciones de tarjetas gráficas, precios MSRP y catálogo de productos.
+---
+
+## 💡 Preguntas Sugeridas de Prueba
+
+Puedes probar **NovaGPU Assistant** en vivo o de forma local con las siguientes preguntas organizadas por departamento o poniendo a prueba sus restricciones de seguridad (*guardrails*):
+
+### 👥 Recursos Humanos (`rrhh`)
+- *"¿Cuáles son las políticas de vacaciones y licencias de la empresa?"*
+- *"¿Cuáles son las reglas del código de conducta y convivencia interna?"*
+
+### 💰 Finanzas (`finanzas`)
+- *"¿Cuál es la política de gastos y reembolsos para viajes de negocios?"*
+- *"¿Qué comprobantes se necesitan para tramitar un reembolso?"*
+
+### ⚙️ Operaciones (`operaciones`)
+- *"¿Cuál es el proceso de manufactura y ensamblaje de las GPUs NovaGPU?"*
+- *"¿Cuáles son los estándares de control de calidad y pruebas de laboratorio?"*
+
+### 📢 Marketing (`marketing`)
+- *"¿Cuáles son las especificaciones y precios de las tarjetas gráficas NovaGPU?"*
+- *"¿Cuál es el catálogo oficial de productos y precios MSRP?"*
+
+---
+
+### 🛡️ Pruebas de Protección Corporativa (Out-of-Domain Guardrails)
+El asistente cuenta con un *System Prompt* estricto para responder **únicamente** sobre la información oficial de **NovaGPU Technologies**. Puedes verificar esta protección realizando preguntas ajenas a la empresa:
+
+- ❌ *"¿Quién ganó el mundial de fútbol?"*  
+  ➡️ **Respuesta esperada:** El asistente declinará la consulta amablemente indicando que solo puede responder preguntas sobre la documentación interna de NovaGPU Technologies.
+- ❌ *"¿Cómo se prepara un pastel de chocolate?"*  
+  ➡️ **Respuesta esperada:** Rechazo formal por estar fuera del ámbito corporativo de la organización.
 
 ---
 
 ## 🛠️ Instalación y Ejecución Local
+
 
 ### 1. Clonar el repositorio
 ```bash
