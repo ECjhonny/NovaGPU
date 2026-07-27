@@ -51,7 +51,8 @@ https://github.com/user-attachments/assets/9ce6e3f7-66f8-41b8-8deb-c2733f19c6c7
 ## ✨ Características Principales
 
 - 🧠 **Arquitectura RAG Multiformato de Alto Rendimiento**: Procesa e indexa automáticamente 8+ formatos de documentos corporativos (PDF, Word, Excel, PowerPoint, Markdown, CSV, JSON, HTML).
-- 🛡️ **Sistema de Fallback Ininterrumpido (Resiliencia 24/7)**: Conmutación automática en milisegundos entre 3 proveedores de LLM principales (**Groq**, **Cohere** y **Google Gemini**) para garantizar disponibilidad continua ante límites de cuota (HTTP 429 Rate Limits).
+- 🛡️ **Sistema de Fallback Ininterrumpido (Resiliencia 24/7)**: Conmutación automática en milisegundos entre 4 proveedores de LLM principales (**OpenRouter**, **Google Gemini**, **Groq** y **Cohere**) para garantizar disponibilidad continua ante límites de cuota (HTTP 429 Rate Limits).
+- 🔒 **Guardrails de Ámbito Corporativo (Out-of-Domain Protection)**: Restricción estricta mediante *System Prompt* para rechazar amablemente preguntas de conocimiento general, matemáticas o trivia ajenas a la empresa, garantizando que el asistente responda **únicamente sobre la documentación interna de NovaGPU Technologies**.
 - 🏢 **Filtrado Semántico por Departamentos**: Permite acotar las respuestas a 10 dominios organizacionales específicos (RRHH, Finanzas, Operaciones, Legal, Marketing, Calidad, Sistemas, Estrategia, R&D y Comunicación).
 - 📊 **Trazabilidad y Citas Transparentes**: Cada respuesta generada incluye las fuentes de información exactas (nombre de archivo, departamento y tipo de documento) utilizadas como contexto.
 - 🔄 **Reindexación Dinámica en Tiempo Real**: Endpoint de API `/api/reindex` e interfaz gráfica con botón para reconstruir la base vectorial sin reiniciar el servicio cuando se agregan o actualizan documentos.
@@ -78,12 +79,14 @@ graph TD
 
     subgraph External AI Services & Embeddings
         Embeddings -->|Primary| Voyage[🧠 Voyage AI voyage-3-lite]
-        Embeddings -->|Fallback 1| CohereEmbed[🧠 Cohere embed-multilingual-v3.0]
+        Embeddings -->|Fallback 1| OpenRouterEmbed[🧠 OpenRouter nvidia/nemotron-3-embed-1b:free]
         Embeddings -->|Fallback 2| GeminiEmbed[🧠 Google Gemini gemini-embedding-2]
+        Embeddings -->|Fallback 3| CohereEmbed[🧠 Cohere embed-multilingual-v3.0]
 
-        MultiLLM -->|Primary| Groq[🥇 Groq llama-3.3-70b-versatile]
-        MultiLLM -->|Fallback 1| CohereLLM[🥈 Cohere command-a-plus-05-2026]
-        MultiLLM -->|Fallback 2| GeminiLLM[🥉 Google Gemini gemini-3.5-flash-lite]
+        MultiLLM -->|Primary| OpenRouterLLM[🥇 OpenRouter meta-llama/llama-3.3-70b-instruct]
+        MultiLLM -->|Fallback 1| GeminiLLM[🥈 Google Gemini gemini-3.5-flash-lite]
+        MultiLLM -->|Fallback 2| Groq[🥉 Groq llama-3.3-70b-versatile]
+        MultiLLM -->|Fallback 3| CohereLLM[🏅 Cohere command-a-plus-05-2026]
     end
 
     subgraph Data Ingestion
@@ -102,7 +105,7 @@ El ciclo de vida de una consulta dentro de **NovaGPU Assistant** consta de 6 eta
    `app/rag/loader.py` recorre la carpeta `documents/`, identifica el formato del archivo y utiliza cargadores especializados de LangChain (`PyPDFLoader`, `UnstructuredWordDocumentLoader`, `UnstructuredExcelLoader`, `UnstructuredPowerPointLoader`, `CSVLoader`, `JSONLoader`, `BSHTMLLoader`, `UnstructuredMarkdownLoader`). Los textos se dividen en fragmentos manejables con superposición (overlap) para preservar el contexto.
 
 2. **Generación de Vector Embeddings**:  
-   Cada fragmento de texto se convierte en un vector denso de alta dimensión usando el motor de embeddings configurado (`Voyage AI voyage-3-lite` por defecto, con fallback automático a `Cohere` o `Gemini`).
+   Cada fragmento de texto se convierte en un vector denso de alta dimensión usando el motor de embeddings configurado (`Voyage AI voyage-3-lite` por defecto, con fallback automático a `OpenRouter (NVIDIA Nemotron 3 Embed 1B)`, `Google Gemini` o `Cohere`).
 
 3. **Almacenamiento e Indexación Vectorial**:  
    Los vectores generados se persisten en **ChromaDB** (`chroma_db/`), etiquetados con metadatos clave como departamento, nombre de archivo y extensión.
@@ -111,10 +114,10 @@ El ciclo de vida de una consulta dentro de **NovaGPU Assistant** consta de 6 eta
    Cuando el usuario realiza una pregunta (ej. *"¿Cuáles son los precios de las GPUs NovaGPU?"*), la consulta se vectoriza y ChromaDB realiza una búsqueda por similitud de coseno para recuperar los fragmentos más relevantes. Si el usuario seleccionó un filtro de departamento (ej. `marketing`), la búsqueda se restringe exclusivamente a ese metadato.
 
 5. **Aumento del Contexto y Prompting (Augmentation)**:  
-   `app/rag/prompts.py` ensambla las instrucciones del sistema, las restricciones de veracidad (solo responder basándose en los documentos cargados) y concatena los fragmentos recuperados junto con la pregunta original.
+   `app/rag/prompts.py` ensambla las instrucciones del sistema, la verificación de ámbito corporativo (*out-of-domain guardrails*) y las restricciones de veracidad, concatenando los fragmentos recuperados junto con la pregunta original.
 
 6. **Inferencia y Respuesta con Fallback Ininterrumpido (Generation)**:  
-   `app/services/chat.py` envía la solicitud al proveedor principal de LLM (Groq con `llama-3.3-70b-versatile`). Si el servidor recibe una respuesta de límite de tasa (`HTTP 429`), el motor conmuta instantáneamente al segundo proveedor (Cohere con `command-a-plus-05-2026`) y, de ser necesario, al tercero (Google Gemini), garantizando la entrega de la respuesta al usuario sin errores.
+   `app/services/chat.py` envía la solicitud al proveedor principal de LLM (OpenRouter con `meta-llama/llama-3.3-70b-instruct`). Si el servidor recibe una respuesta de límite de tasa (`HTTP 429`), el motor conmuta instantáneamente al segundo proveedor (Google Gemini con `gemini-3.5-flash-lite`), luego a Groq (`llama-3.3-70b-versatile`) y finalmente a Cohere (`command-a-plus-05-2026`), garantizando la entrega de la respuesta al usuario sin errores.
 
 ---
 
@@ -122,15 +125,17 @@ El ciclo de vida de una consulta dentro de **NovaGPU Assistant** consta de 6 eta
 
 - **Backend Web**: FastAPI (Python 3.10+) & Uvicorn Server
 - **Inferencia LLM (Multi-proveedor con Fallback automático por Rate Limit)**:
-  - 🥇 **Groq**: `llama-3.3-70b-versatile`
-  - 🥈 **Cohere**: `command-a-plus-05-2026`
-  - 🥉 **Google Gemini**: `gemini-3.5-flash-lite`
+  - 🥇 **OpenRouter**: `meta-llama/llama-3.3-70b-instruct` (o cualquier modelo OpenRouter)
+  - 🥈 **Google Gemini**: `gemini-3.5-flash-lite`
+  - 🥉 **Groq**: `llama-3.3-70b-versatile`
+  - 🏅 **Cohere**: `command-a-plus-05-2026`
 - **Embeddings Vectoriales (Multi-proveedor con Fallback)**:
   - 🧠 **Voyage AI**: `voyage-3-lite`
-  - 🧠 **Cohere**: `embed-multilingual-v3.0`
+  - 🧠 **OpenRouter**: `nvidia/nemotron-3-embed-1b:free`
   - 🧠 **Google Gemini**: `gemini-embedding-2`
+  - 🧠 **Cohere**: `embed-multilingual-v3.0`
 - **Vector Database**: ChromaDB (Base de datos vectorial persistente con autorecreación ante cambios de dimensión)
-- **Orquestación RAG**: LangChain 0.3 (`langchain-cohere`, `langchain-google-genai`, `langchain-groq`, `langchain-voyageai`)
+- **Orquestación RAG**: LangChain 0.3 (`langchain-openai`, `langchain-google-genai`, `langchain-groq`, `langchain-cohere`, `langchain-voyageai`)
 - **Frontend**: HTML5, Vanilla CSS3 (Dark Theme corporativo) & JavaScript ES6+
 
 ---
@@ -260,15 +265,15 @@ Edita `.env` e ingresa tus claves de API y preferencia de proveedores:
 
 ```env
 # --- Selección de Proveedores ---
-# Opciones LLM: groq, cohere, gemini
-# Opciones Embeddings: voyage, cohere, gemini
-LLM_PROVIDER=groq
+# Opciones LLM: openrouter (por defecto), gemini, groq, cohere
+# Opciones Embeddings: voyage (por defecto), openrouter, gemini, cohere
+LLM_PROVIDER=openrouter
 EMBEDDINGS_PROVIDER=voyage
 
-# --- Cohere (LLM & Embeddings) ---
-COHERE_API_KEY=tu_clave_cohere_aqui
-COHERE_MODEL=command-a-plus-05-2026
-COHERE_EMBEDDING_MODEL=embed-multilingual-v3.0
+# --- OpenRouter (LLM & Embeddings) ---
+OPENROUTER_API_KEY=tu_clave_openrouter_aqui
+OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct
+OPENROUTER_EMBEDDING_MODEL=nvidia/nemotron-3-embed-1b:free
 
 # --- Gemini (LLM & Embeddings - Fallback) ---
 GEMINI_API_KEY=tu_clave_gemini_aqui
@@ -278,6 +283,11 @@ GEMINI_EMBEDDING_MODEL=gemini-embedding-2
 # --- Groq (LLM) ---
 GROQ_API_KEY=gsk_tu_clave_groq_aqui
 GROQ_MODEL=llama-3.3-70b-versatile
+
+# --- Cohere (LLM & Embeddings) ---
+COHERE_API_KEY=tu_clave_cohere_aqui
+COHERE_MODEL=command-a-plus-05-2026
+COHERE_EMBEDDING_MODEL=embed-multilingual-v3.0
 
 # --- Voyage AI (Embeddings) ---
 VOYAGE_API_KEY=pa-tu_clave_voyage_aqui
