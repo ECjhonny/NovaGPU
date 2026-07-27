@@ -22,9 +22,10 @@ STATIC_DIR = BASE_DIR / "static"
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter").lower()
 EMBEDDINGS_PROVIDER = os.getenv("EMBEDDINGS_PROVIDER", "voyage").lower()
 
-# --- Configuración de OpenRouter (LLM) ---
+# --- Configuración de OpenRouter (LLM & Embeddings) ---
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
+OPENROUTER_EMBEDDING_MODEL = os.getenv("OPENROUTER_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b:free")
 
 # --- Configuración de Groq (LLM) ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")

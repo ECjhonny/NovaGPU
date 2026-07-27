@@ -10,6 +10,7 @@ class ProvidersTests(unittest.TestCase):
     @patch("app.rag.embeddings.COHERE_API_KEY", "")
     @patch("app.rag.embeddings.GEMINI_API_KEY", "")
     @patch("app.rag.embeddings.VOYAGE_API_KEY", "")
+    @patch("app.rag.embeddings.OPENROUTER_API_KEY", "")
     def test_embeddings_missing_keys_raises_value_error(self):
         with self.assertRaises(ValueError) as ctx:
             embeddings.get_embeddings()
@@ -24,6 +25,16 @@ class ProvidersTests(unittest.TestCase):
         res = embeddings.get_embeddings()
         self.assertEqual(res, mock_instance)
         mock_voyage.assert_called_once()
+
+    @patch("app.rag.embeddings.EMBEDDINGS_PROVIDER", "openrouter")
+    @patch("app.rag.embeddings.OPENROUTER_API_KEY", "sk-or-fake-key")
+    @patch("app.rag.embeddings.OpenAIEmbeddings")
+    def test_embeddings_openrouter_provider(self, mock_openrouter_embeddings):
+        mock_instance = MagicMock()
+        mock_openrouter_embeddings.return_value = mock_instance
+        res = embeddings.get_embeddings()
+        self.assertEqual(res, mock_instance)
+        mock_openrouter_embeddings.assert_called_once()
 
     @patch("app.services.chat.LLM_PROVIDER", "openrouter")
     @patch("app.services.chat.OPENROUTER_API_KEY", "")
