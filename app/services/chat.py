@@ -28,7 +28,6 @@ try:
 except ImportError:
     ChatOpenAI = None
 
-from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferWindowMemory
 
 from app.core.config import (
@@ -44,8 +43,8 @@ from app.core.config import (
     TEMPERATURE,
     TOP_K_RESULTS,
 )
-from app.rag.prompts import CHAT_PROMPT, CONDENSE_QUESTION_PROMPT
-from app.rag.vectorstore import get_retriever, search_documents
+from app.rag.prompts import CHAT_PROMPT
+from app.rag.vectorstore import search_documents
 from app.utils import format_chat_response, format_documents_for_context, get_logger
 
 logger = get_logger(__name__)
@@ -201,64 +200,38 @@ def chat(
         all_llms = _get_all_llms()
         last_error: Exception | None = None
 
-        # Pre-calcular datos que no dependen del LLM (evitar repetir trabajo)
-        if department:
-            docs = search_documents(question, k=TOP_K_RESULTS, department=department)
-            context = format_documents_for_context(docs)
-        else:
-            docs = None
-            context = None
+        # Pre-calcular el contexto de documentos RAG utilizando search_documents
+        # (search_documents gestiona automáticamente desajustes de dimensiones en ChromaDB)
+        docs = search_documents(question, k=TOP_K_RESULTS, department=department)
+        context = format_documents_for_context(docs)
+
+        memory = _get_memory(session_id)
+        chat_history = (
+            memory.chat_memory.messages
+            if hasattr(memory, "chat_memory")
+            else []
+        )
+        messages = CHAT_PROMPT.format_messages(
+            context=context,
+            chat_history=chat_history,
+            question=question,
+        )
 
         for provider_name, llm in all_llms:
             try:
                 logger.info(f"🔄 Intentando con {provider_name}...")
 
-                if department and docs is not None and context is not None:
-                    # --- Ruta con filtro de departamento ---
-                    memory = _get_memory(session_id)
-                    chat_history = (
-                        memory.chat_memory.messages
-                        if hasattr(memory, "chat_memory")
-                        else []
-                    )
-                    messages = CHAT_PROMPT.format_messages(
-                        context=context,
-                        chat_history=chat_history,
-                        question=question,
-                    )
-                    response = llm.invoke(messages)
-                    raw_content = response.content
-                    answer: str = (
-                        raw_content
-                        if isinstance(raw_content, str)
-                        else str(raw_content)
-                    )
-                    memory.save_context(
-                        {"question": question}, {"answer": answer}
-                    )
-                    source_docs = docs
-                else:
-                    # --- Ruta general con cadena RAG ---
-                    retriever = get_retriever(k=TOP_K_RESULTS)
-                    memory = _get_memory(session_id)
-                    chain = ConversationalRetrievalChain.from_llm(
-                        llm=llm,
-                        retriever=retriever,
-                        memory=memory,
-                        combine_docs_chain_kwargs={"prompt": CHAT_PROMPT},
-                        condense_question_prompt=CONDENSE_QUESTION_PROMPT,
-                        get_chat_history=lambda h: h,
-                        return_source_documents=True,
-                        verbose=False,
-                    )
-                    result = chain.invoke({"question": question})
-                    raw_answer = result.get("answer", "")
-                    answer = (
-                        raw_answer
-                        if isinstance(raw_answer, str)
-                        else str(raw_answer)
-                    )
-                    source_docs = result.get("source_documents", [])
+                response = llm.invoke(messages)
+                raw_content = response.content
+                answer: str = (
+                    raw_content
+                    if isinstance(raw_content, str)
+                    else str(raw_content)
+                )
+                memory.save_context(
+                    {"question": question}, {"answer": answer}
+                )
+                source_docs = docs
 
                 # ✅ Éxito: retornar respuesta
                 formatted = format_chat_response(answer, source_docs)
