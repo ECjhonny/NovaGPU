@@ -145,7 +145,23 @@ def search_documents(
             logger.info(f"🔍 Búsqueda: '{query[:50]}...' → {len(results)} resultados")
             return results
         except Exception as e:  # noqa: BLE001
-            if _is_embedding_rate_limit(e) and attempt < max_retries - 1:
+            err_str = str(e).lower()
+            if "dimension" in err_str or "expecting embedding" in err_str:
+                logger.warning(
+                    "⚠️ Desajuste de dimensiones de embeddings detectado en ChromaDB. "
+                    "Reiniciando y re-indexando automáticamente la base de datos vectorial..."
+                )
+                try:
+                    reset_vectorstore()
+                    from app.rag.loader import load_and_split_documents
+                    docs = load_and_split_documents()
+                    index_documents(docs, force=True)
+                    vectorstore = get_vectorstore()
+                    return vectorstore.similarity_search(query, **search_kwargs)
+                except Exception as reindex_err:
+                    logger.error(f"❌ Error al re-indexar tras desajuste de dimensiones: {reindex_err}")
+                    raise
+            elif _is_embedding_rate_limit(e) and attempt < max_retries - 1:
                 wait_time = 10 * (attempt + 1)
                 logger.warning(
                     f"⚠️ Rate limit en embeddings (búsqueda). "
