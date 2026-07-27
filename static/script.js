@@ -29,9 +29,27 @@ const elements = {
     btnMenu: $("#btn-menu"),
     btnClear: $("#btn-clear"),
     btnReindex: $("#btn-reindex"),
+    btnDocs: $("#btn-docs"),
     toastContainer: $("#toast-container"),
     departmentTitle: $("#current-department-title"),
+    // Modal elementos
+    modalDocsBackdrop: $("#modal-docs-backdrop"),
+    btnModalClose: $("#btn-modal-close"),
+    btnModalReindex: $("#btn-modal-reindex"),
+    uploadForm: $("#upload-form"),
+    uploadDepartment: $("#upload-department"),
+    dropZone: $("#drop-zone"),
+    fileInput: $("#file-input"),
+    filePreview: $("#file-preview"),
+    selectedFileName: $("#selected-file-name"),
+    btnRemoveFile: $("#btn-remove-file"),
+    btnUpload: $("#btn-upload"),
+    docsList: $("#docs-list"),
+    totalDocsCount: $("#total-docs-count"),
 };
+
+// Variable para el archivo seleccionado
+let selectedFile = null;
 
 // ============================================================
 //  Inicialización
@@ -86,7 +104,22 @@ function initEventListeners() {
 
     // Re-indexar documentos
     elements.btnReindex.addEventListener("click", reindexDocuments);
+
+    // Modal de Gestión de Documentos
+    elements.btnDocs.addEventListener("click", openDocsModal);
+    elements.btnModalClose.addEventListener("click", closeDocsModal);
+    elements.modalDocsBackdrop.addEventListener("click", (e) => {
+        if (e.target === elements.modalDocsBackdrop) closeDocsModal();
+    });
+    elements.btnModalReindex.addEventListener("click", () => {
+        reindexDocuments();
+        fetchDocuments();
+    });
+
+    // Subida de archivos
+    initUploadEvents();
 }
+
 
 // ============================================================
 //  Chat
@@ -410,3 +443,224 @@ function showToast(message, type = "info", duration = 4000) {
         setTimeout(() => toast.remove(), 300);
     }, duration);
 }
+
+// ============================================================
+//  Gestión de Documentos Modal & Upload
+// ============================================================
+function openDocsModal() {
+    elements.modalDocsBackdrop.classList.add("active");
+    fetchDocuments();
+    closeSidebar();
+}
+
+function closeDocsModal() {
+    elements.modalDocsBackdrop.classList.remove("active");
+    resetUploadForm();
+}
+
+function initUploadEvents() {
+    // Click en dropzone para seleccionar archivo
+    elements.dropZone.addEventListener("click", () => elements.fileInput.click());
+
+    // Cambio en input file
+    elements.fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+            handleFileSelected(e.target.files[0]);
+        }
+    });
+
+    // Drag and drop events
+    ["dragenter", "dragover"].forEach((eventName) => {
+        elements.dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            elements.dropZone.classList.add("dragover");
+        });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+        elements.dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            elements.dropZone.classList.remove("dragover");
+        });
+    });
+
+    elements.dropZone.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFileSelected(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Quitar archivo seleccionado
+    elements.btnRemoveFile.addEventListener("click", resetUploadForm);
+
+    // Form submit upload
+    elements.uploadForm.addEventListener("submit", handleUploadSubmit);
+}
+
+function handleFileSelected(file) {
+    const allowed = [".pdf", ".docx", ".txt", ".md", ".csv", ".xlsx", ".json", ".html", ".pptx"];
+    const ext = "." + file.name.split(".").pop().toLowerCase();
+    
+    if (!allowed.includes(ext)) {
+        showToast(`Extensión no permitida. Formatos soportados: ${allowed.join(", ")}`, "error");
+        return;
+    }
+
+    selectedFile = file;
+    elements.selectedFileName.textContent = `${file.name} (${formatBytes(file.size)})`;
+    elements.filePreview.classList.remove("hidden");
+    elements.dropZone.classList.add("hidden");
+    elements.btnUpload.disabled = false;
+}
+
+function resetUploadForm() {
+    selectedFile = null;
+    elements.fileInput.value = "";
+    elements.filePreview.classList.add("hidden");
+    elements.dropZone.classList.remove("hidden");
+    elements.btnUpload.disabled = true;
+}
+
+async function handleUploadSubmit(e) {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    const department = elements.uploadDepartment.value;
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("department", department);
+
+    elements.btnUpload.disabled = true;
+    elements.btnUpload.querySelector("span").textContent = "⏳";
+
+    try {
+        const response = await fetch("/api/documents/upload", {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast(data.message || "Documento subido con éxito", "success");
+            resetUploadForm();
+            fetchDocuments();
+        } else {
+            showToast(data.detail || "Error al subir el documento", "error");
+        }
+    } catch (error) {
+        showToast("Error de conexión al subir documento", "error");
+    } finally {
+        elements.btnUpload.querySelector("span").textContent = "⬆️";
+    }
+}
+
+async function fetchDocuments() {
+    elements.docsList.innerHTML = `<div class="docs-loading">Cargando documentos...</div>`;
+    
+    try {
+        const response = await fetch("/api/documents");
+        const data = await response.json();
+
+        if (!response.ok) {
+            elements.docsList.innerHTML = `<div class="docs-empty">Error al cargar la lista de documentos.</div>`;
+            return;
+        }
+
+        renderDocumentsList(data.departments);
+    } catch (error) {
+        elements.docsList.innerHTML = `<div class="docs-empty">Error de conexión al obtener documentos.</div>`;
+    }
+}
+
+function renderDocumentsList(departments) {
+    let totalCount = 0;
+    let html = "";
+
+    const deptIcons = {
+        rrhh: "👥",
+        finanzas: "💰",
+        operaciones: "⚙️",
+        marketing: "📢"
+    };
+
+    const deptNames = {
+        rrhh: "Recursos Humanos",
+        finanzas: "Finanzas",
+        operaciones: "Operaciones",
+        marketing: "Marketing"
+    };
+
+    departments.forEach((d) => {
+        totalCount += d.count;
+        if (d.files.length === 0) return;
+
+        const filesHTML = d.files
+            .map(
+                (f) => `
+            <div class="doc-item">
+                <div class="doc-info">
+                    <span>📄</span>
+                    <span class="doc-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
+                    <span class="doc-size">(${formatBytes(f.size)})</span>
+                </div>
+                <button class="btn-delete-doc" onclick="confirmDeleteDoc('${escapeHTML(d.department)}', '${escapeHTML(f.name)}')" title="Eliminar documento">
+                    🗑️
+                </button>
+            </div>`
+            )
+            .join("");
+
+        html += `
+            <div class="docs-dept-group">
+                <div class="docs-dept-header">
+                    <span>${deptIcons[d.department] || "📁"} ${deptNames[d.department] || capitalize(d.department)}</span>
+                    <span>${d.count} archivo(s)</span>
+                </div>
+                <div class="docs-dept-files">
+                    ${filesHTML}
+                </div>
+            </div>`;
+    });
+
+    elements.totalDocsCount.textContent = `${totalCount} documento(s)`;
+
+    if (totalCount === 0) {
+        elements.docsList.innerHTML = `<div class="docs-empty">No hay documentos cargados en el sistema.</div>`;
+    } else {
+        elements.docsList.innerHTML = html;
+    }
+}
+
+async function confirmDeleteDoc(department, filename) {
+    if (!confirm(`¿Estás seguro de que deseas eliminar '${filename}' de ${department}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/documents/${department}/${encodeURIComponent(filename)}`, {
+            method: "DELETE",
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast(data.message || "Documento eliminado", "success");
+            fetchDocuments();
+        } else {
+            showToast(data.detail || "Error al eliminar documento", "error");
+        }
+    } catch (error) {
+        showToast("Error de conexión al eliminar documento", "error");
+    }
+}
+
+function formatBytes(bytes, decimals = 1) {
+    if (!bytes || bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+

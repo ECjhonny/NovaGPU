@@ -61,13 +61,7 @@ DEPARTMENTS = [
     "rrhh",
     "finanzas",
     "operaciones",
-    "legal",
     "marketing",
-    "calidad",
-    "sistemas",
-    "estrategia",
-    "investigacion",
-    "comunicacion",
 ]
 
 # --- Extensiones de documentos soportadas ---

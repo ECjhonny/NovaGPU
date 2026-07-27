@@ -1,12 +1,12 @@
-"""Rutas HTTP del asistente."""
-
+import os
 import uuid
+from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import DEPARTMENTS, TEMPLATES_DIR
+from app.core.config import DEPARTMENTS, DOCUMENTS_DIR, SUPPORTED_EXTENSIONS, TEMPLATES_DIR
 from app.models.schemas import ChatRequest, ChatResponse
 from app.rag.loader import load_and_split
 from app.rag.vectorstore import index_documents, reset_vectorstore
@@ -70,7 +70,106 @@ async def get_departments():
     return {"departments": DEPARTMENTS}
 
 
+@router.get("/api/documents")
+async def get_documents():
+    """Retorna la lista de todos los documentos organizados por departamento."""
+    result = []
+    try:
+        for dept in DEPARTMENTS:
+            dept_path = DOCUMENTS_DIR / dept
+            if not dept_path.exists():
+                dept_path.mkdir(parents=True, exist_ok=True)
+            files = []
+            for file_path in dept_path.glob("*"):
+                if file_path.is_file() and file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
+                    files.append({
+                        "name": file_path.name,
+                        "size": file_path.stat().st_size,
+                        "extension": file_path.suffix.lower(),
+                        "path": f"{dept}/{file_path.name}"
+                    })
+            result.append({
+                "department": dept,
+                "files": files,
+                "count": len(files)
+            })
+        return {"departments": result}
+    except Exception as e:
+        logger.error(f"Error obteniendo lista de documentos: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/api/documents/upload")
+async def upload_document(
+    file: UploadFile = File(...),
+    department: str = Form(...)
+):
+    """Sube un documento a la carpeta del departamento correspondiente."""
+    if department not in DEPARTMENTS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Departamento inválido. Debe ser uno de: {', '.join(DEPARTMENTS)}"
+        )
+
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Extensión no permitida. Formatos soportados: {', '.join(SUPPORTED_EXTENSIONS)}"
+        )
+
+    safe_filename = Path(file.filename).name
+    dept_dir = DOCUMENTS_DIR / department
+    dept_dir.mkdir(parents=True, exist_ok=True)
+    target_path = dept_dir / safe_filename
+
+    # Validar path traversal
+    if not target_path.resolve().is_relative_to(DOCUMENTS_DIR.resolve()):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ruta de archivo no válida.")
+
+    try:
+        content = await file.read()
+        with open(target_path, "wb") as f:
+            f.write(content)
+        
+        logger.info(f"📁 Documento subido con éxito: {target_path}")
+        return {
+            "message": f"Documento '{safe_filename}' guardado en '{department}' exitosamente.",
+            "filename": safe_filename,
+            "department": department
+        }
+    except Exception as e:
+        logger.error(f"Error al guardar documento: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"No se pudo guardar el archivo: {str(e)}")
+
+
+@router.delete("/api/documents/{department}/{filename}")
+async def delete_document(department: str, filename: str):
+    """Elimina un documento de la carpeta de un departamento."""
+    if department not in DEPARTMENTS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Departamento inválido.")
+
+    safe_filename = Path(filename).name
+    target_path = DOCUMENTS_DIR / department / safe_filename
+
+    # Validar path traversal
+    if not target_path.resolve().is_relative_to(DOCUMENTS_DIR.resolve()):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ruta de archivo no válida.")
+
+    if not target_path.exists() or not target_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El archivo no existe.")
+
+    try:
+        os.remove(target_path)
+        logger.info(f"🗑️ Documento eliminado: {target_path}")
+        return {"message": f"Documento '{safe_filename}' eliminado correctamente.", "department": department, "filename": safe_filename}
+    except Exception as e:
+        logger.error(f"Error al eliminar documento: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error al eliminar archivo: {str(e)}")
+
+
 @router.get("/health")
 @router.get("/api/health")
 async def health_check():
     return {"status": "ok", "service": "NovaGPU Assistant API (FastAPI)", "departments_count": len(DEPARTMENTS)}
+
