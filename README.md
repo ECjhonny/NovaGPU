@@ -303,14 +303,15 @@ Accede desde tu navegador:
 
 | Proveedor | Tipo | Modelo por Defecto | Variable `.env` |
 | :--- | :--- | :--- | :--- |
+| **OpenRouter** | LLM | `meta-llama/llama-3.3-70b-instruct` | `OPENROUTER_API_KEY` |
 | **Groq** | LLM | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
-| **Cohere** | LLM | `command-a-plus-05-2026` | `COHERE_API_KEY` |
-| **Cohere** | Embeddings | `embed-multilingual-v3.0` | `COHERE_API_KEY` |
 | **Google Gemini** | LLM | `gemini-3.5-flash-lite` | `GEMINI_API_KEY` |
 | **Google Gemini** | Embeddings | `gemini-embedding-2` | `GEMINI_API_KEY` |
+| **Cohere** | LLM | `command-a-plus-05-2026` | `COHERE_API_KEY` |
+| **Cohere** | Embeddings | `embed-multilingual-v3.0` | `COHERE_API_KEY` |
 | **Voyage AI** | Embeddings | `voyage-3-lite` | `VOYAGE_API_KEY` |
 
-> 🛡️ **Sistema de Fallback Automático con Detección de Rate Limit**: Si un proveedor LLM alcanza su límite de consultas (HTTP 429 / Rate Limit), el sistema conmuta **automáticamente** al siguiente proveedor disponible sin interrumpir el servicio. Para embeddings, se implementan reintentos automáticos con backoff exponencial.
+> 🛡️ **Sistema de Fallback Automático con Detección de Rate Limit**: Si un proveedor LLM alcanza su límite de consultas (HTTP 429 / Rate Limit), el sistema conmuta **automáticamente** entre **OpenRouter**, **Gemini**, **Groq** y **Cohere** sin interrumpir el servicio. Para embeddings, se implementan reintentos automáticos con backoff exponencial.
 
 ---
 

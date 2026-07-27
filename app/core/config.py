@@ -19,8 +19,12 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
 # --- Selección de Proveedores ---
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "cohere").lower()
-EMBEDDINGS_PROVIDER = os.getenv("EMBEDDINGS_PROVIDER", "cohere").lower()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openrouter").lower()
+EMBEDDINGS_PROVIDER = os.getenv("EMBEDDINGS_PROVIDER", "voyage").lower()
+
+# --- Configuración de OpenRouter (LLM) ---
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
 
 # --- Configuración de Groq (LLM) ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")

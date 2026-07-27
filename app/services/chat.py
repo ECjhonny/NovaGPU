@@ -23,6 +23,11 @@ try:
 except ImportError:
     ChatGroq = None
 
+try:
+    from langchain_openai import ChatOpenAI
+except ImportError:
+    ChatOpenAI = None
+
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferWindowMemory
 
@@ -34,6 +39,8 @@ from app.core.config import (
     GROQ_API_KEY,
     GROQ_MODEL,
     LLM_PROVIDER,
+    OPENROUTER_API_KEY,
+    OPENROUTER_MODEL,
     TEMPERATURE,
     TOP_K_RESULTS,
 )
@@ -57,6 +64,17 @@ def _get_all_llms() -> list[tuple[str, Any]]:
 
     # Definir constructores para cada proveedor
     builders: dict[str, tuple[str, Any] | None] = {}
+
+    if OPENROUTER_API_KEY and ChatOpenAI is not None:
+        builders["openrouter"] = (
+            f"OpenRouter ({OPENROUTER_MODEL})",
+            ChatOpenAI(
+                model=OPENROUTER_MODEL,
+                temperature=TEMPERATURE,
+                api_key=SecretStr(OPENROUTER_API_KEY),
+                base_url="https://openrouter.ai/api/v1",
+            ),
+        )
 
     if COHERE_API_KEY and ChatCohere is not None:
         builders["cohere"] = (
@@ -90,11 +108,14 @@ def _get_all_llms() -> list[tuple[str, Any]]:
 
     # Orden de prioridad según el proveedor seleccionado
     priority_map = {
-        "cohere": ["cohere", "gemini", "groq"],
-        "gemini": ["gemini", "cohere", "groq"],
-        "groq": ["groq", "cohere", "gemini"],
+        "openrouter": ["openrouter", "gemini", "groq", "cohere"],
+        "cohere": ["cohere", "openrouter", "gemini", "groq"],
+        "gemini": ["gemini", "openrouter", "groq", "cohere"],
+        "groq": ["groq", "openrouter", "gemini", "cohere"],
     }
-    priority = priority_map.get(provider, ["cohere", "gemini", "groq"])
+    priority = priority_map.get(
+        provider, ["openrouter", "gemini", "groq", "cohere"]
+    )
 
     for p in priority:
         if p in builders and builders[p] is not None:
@@ -102,11 +123,11 @@ def _get_all_llms() -> list[tuple[str, Any]]:
 
     if not available:
         logger.error(
-            "❌ Ninguna API Key válida configurada para Cohere, Gemini o Groq. Verifica tu archivo .env"
+            "❌ Ninguna API Key válida configurada para OpenRouter, Gemini, Groq o Cohere. Verifica tu archivo .env"
         )
         raise ValueError(
             "No se encontró ninguna API Key válida configurada. "
-            "Agrega COHERE_API_KEY, GEMINI_API_KEY o GROQ_API_KEY a tu archivo .env para el LLM."
+            "Agrega OPENROUTER_API_KEY, GEMINI_API_KEY, GROQ_API_KEY o COHERE_API_KEY a tu archivo .env para el LLM."
         )
 
     logger.info(
@@ -257,7 +278,7 @@ def chat(
         return {
             "response": (
                 "⏳ **Límite de consultas alcanzado temporalmente**\n\n"
-                "Todos los proveedores de IA (Cohere, Gemini, Groq) han alcanzado "
+                "Todos los proveedores de IA (OpenRouter, Gemini, Groq, Cohere) han alcanzado "
                 "su límite de consultas en este momento.\n\n"
                 "Por favor, espera **1-2 minutos** e intenta de nuevo.\n\n"
                 "💡 *Consejo: Puedes aumentar los límites usando planes de pago "
@@ -282,9 +303,10 @@ def chat(
                 "❌ **Error de Autenticación (API Key Incorrecta o Expirada)**\n\n"
                 "La clave de API utilizada no es válida o ha caducado.\n"
                 "Por favor, revisa tu archivo `.env` y asegúrate de configurar una API Key válida:\n"
-                "- **Cohere**: Obtén tu API key en [dashboard.cohere.com/api-keys](https://dashboard.cohere.com/api-keys)\n"
+                "- **OpenRouter**: Obtén tu API key en [openrouter.ai/keys](https://openrouter.ai/keys)\n"
                 "- **Gemini**: Obtén tu API key en [aistudio.google.com/apikey](https://aistudio.google.com/apikey)\n"
-                "- **Groq**: Obtén tu API key en [console.groq.com/keys](https://console.groq.com/keys)"
+                "- **Groq**: Obtén tu API key en [console.groq.com/keys](https://console.groq.com/keys)\n"
+                "- **Cohere**: Obtén tu API key en [dashboard.cohere.com/api-keys](https://dashboard.cohere.com/api-keys)"
             )
         else:
             user_error = (
